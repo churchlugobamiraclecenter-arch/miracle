@@ -108,32 +108,39 @@
     </span>
   </div>
 </div>
+<!-- Header -->
 <header class="site-header">
   <div class="container">
-    <a class="brand" href="index.html">
-      <img src="images/pastors-service.jpg" alt="" width="48" height="48">
+    <a class="brand" href="index.html" aria-label="Lugoba Miracle Center Church">
+      <img src="images/pastors-service.jpg" alt="Church" width="48" height="48">
       <span class="brand-text">
         <span class="brand-name">Lugoba Miracle Center</span>
         <span class="brand-tag">A Place of Love and Holiness</span>
       </span>
     </a>
+
     <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
       <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <nav class="nav" id="nav">
-      <a href="index.html">HOME</a>
-      <a href="about.html">ABOUT</a>
-      <a href="other-services.html">SERVICES</a>
-      <a href="live.html" aria-current="page">LIVE</a>
-      <a href="gallery.html">GALLERY</a>
-      <a href="newsletter.html">NEWSLETTER</a>
-      <a href="admin.html" class="auth-admin hidden">ADMIN</a>
-      <a class="btn btn-primary" href="create-account.html">JOIN FELLOWSHIP</a>
-    </nav>
   </div>
 </header>
+
+<!-- Backdrop (must be present) -->
 <div class="nav-backdrop" id="navBackdrop" hidden></div>
+
+<!-- Nav lives OUTSIDE the header -->
+<nav class="nav" id="nav" aria-label="Main navigation">
+  <a href="index.html" aria-current="page">HOME</a>
+  <a href="about.html">ABOUT</a>
+  <a href="other-services.html">SERVICES</a>
+  <a href="live.html">LIVE</a>
+  <a href="gallery.html">GALLERY</a>
+  <a href="newsletter.html">NEWSLETTER</a>
+  <a href="privacy.html">PRIVACY</a>
+  <a href="admin.html" class="auth-admin hidden">ADMIN</a>
+  <a class="btn btn-primary" href="create-account.html">JOIN FELLOWSHIP</a>
+</nav>
 
 <section class="page-hero">
   <div class="container">
