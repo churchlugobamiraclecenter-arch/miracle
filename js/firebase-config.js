@@ -7,12 +7,13 @@
  */
 window.LMCC_CONFIG = {
   firebase: {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyD3JyGyVAHUt1DcFKMJVM1a5Tb5xISjKSY",
+  authDomain: "lugoba.firebaseapp.com",
+  projectId: "lugoba",
+  storageBucket: "lugoba.firebasestorage.app",
+  messagingSenderId: "959628417659",
+  appId: "1:959628417659:web:7a3e563e39b6404402e0de",
+  measurementId: "G-LP8CSWGBGN"
   },
   cloudinary: {
     cloudName: "YOUR_CLOUDINARY_CLOUD_NAME",
