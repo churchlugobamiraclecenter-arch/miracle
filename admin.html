@@ -8,6 +8,25 @@
   <link rel="stylesheet" href="css/miracle-theme.css">
   <style>
     .admin-panel { display: none; }
+    .msg-popup-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(14,47,30,.45);
+      z-index: 10000; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .msg-popup-overlay.show { display: flex; }
+    .msg-popup {
+      background: #fff; border-radius: 16px; max-width: 420px; width: 100%;
+      padding: 1.4rem 1.5rem; box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      border-top: 5px solid #1b5a39; animation: popIn .25s ease;
+    }
+    @keyframes popIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .msg-popup h3 { margin: 0 0 .5rem; color: #1b5a39; }
+    .msg-popup .from { font-weight: 700; margin-bottom: .35rem; }
+    .msg-popup .body { color: #333; white-space: pre-wrap; margin: .6rem 0 1rem; line-height: 1.5; }
+    .msg-popup .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
     .admin-panel.active { display: block; }
     .tab-btn { background: none; border: 0; padding: .6rem 1rem; font-weight: 600; cursor: pointer; color: var(--ink-soft); border-bottom: 2px solid transparent; }
     .tab-btn.active { color: var(--green-700); border-bottom-color: var(--gold-500); }
@@ -288,6 +307,18 @@
   </div>
 </div>
 
+<div class="msg-popup-overlay" id="msgPopupOverlay" aria-live="polite">
+  <div class="msg-popup" role="dialog" aria-label="New message">
+    <h3><i class="fas fa-envelope"></i> New message</h3>
+    <div class="from" id="msgPopupFrom"></div>
+    <div class="body" id="msgPopupBody"></div>
+    <div class="actions">
+      <a class="btn btn-whatsapp btn-sm" id="msgPopupWa" target="_blank" rel="noopener">Reply on WhatsApp</a>
+      <button type="button" class="btn btn-outline-dark btn-sm" id="msgPopupClose">Close</button>
+      <button type="button" class="btn btn-primary btn-sm" id="msgPopupView">View all messages</button>
+    </div>
+  </div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -300,10 +331,97 @@
   var waNum = (window.LMCC_CONFIG && window.LMCC_CONFIG.whatsappNumber) || '256704476063';
   document.getElementById('waAdminLink').href = 'https://wa.me/' + waNum;
 
+  
+  var unsubMessages = null;
+
+  function renderMessagesTable(messages) {
+    var waNum = (window.LMCC_CONFIG && LMCC_CONFIG.whatsappNumber) || '256704476063';
+    var table = document.getElementById('messagesTable');
+    var stat = document.getElementById('statMessages');
+    if (stat) stat.textContent = messages.length;
+    if (!table) return;
+    table.innerHTML = messages.length
+      ? messages.map(function (m) {
+          var when = m.at && m.at.toDate ? m.at.toDate().toLocaleString() : '';
+          var preview = (m.message || '').slice(0, 90);
+          return '<tr><td>' + (m.name || 'Visitor') + '</td><td>' + preview + ((m.message || '').length > 90 ? '…' : '') + '</td>' +
+            '<td>' + when + '</td><td><a class="btn btn-whatsapp btn-sm" href="https://wa.me/' + waNum + '?text=' + encodeURIComponent('Re: ' + (m.message || '')) + '" target="_blank">Reply</a></td></tr>';
+        }).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">No messages yet</td></tr>';
+  }
+
+  function showMessagePopup(m) {
+    var overlay = document.getElementById('msgPopupOverlay');
+    if (!overlay) return;
+    document.getElementById('msgPopupFrom').textContent = 'From: ' + (m.name || 'Visitor');
+    document.getElementById('msgPopupBody').textContent = m.message || '';
+    var waNum = (window.LMCC_CONFIG && LMCC_CONFIG.whatsappNumber) || '256704476063';
+    document.getElementById('msgPopupWa').href =
+      'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Re: ' + (m.message || ''));
+    overlay.classList.add('show');
+    // Browser notification (if allowed)
+    try {
+      if (window.Notification && Notification.permission === 'granted') {
+        new Notification('New church website message', {
+          body: (m.name || 'Visitor') + ': ' + (m.message || '').slice(0, 120),
+          icon: 'images/pastors-service.jpg'
+        });
+      }
+    } catch (e) {}
+    // Short beep via Web Audio
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; g.gain.value = 0.05;
+      o.start();
+      setTimeout(function () { o.stop(); ctx.close(); }, 180);
+    } catch (e) {}
+  }
+
+  function startMessageLiveUpdates() {
+    if (unsubMessages) return;
+    if (!window.LMCC || !LMCC.listenMessages) return;
+    unsubMessages = LMCC.listenMessages(
+      function (items) { renderMessagesTable(items); },
+      function (m) { showMessagePopup(m); }
+    );
+    // Ask for desktop notifications once
+    try {
+      if (window.Notification && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (e) {}
+  }
+
+  var popClose = document.getElementById('msgPopupClose');
+  if (popClose) {
+    popClose.addEventListener('click', function () {
+      document.getElementById('msgPopupOverlay').classList.remove('show');
+    });
+  }
+  var popView = document.getElementById('msgPopupView');
+  if (popView) {
+    popView.addEventListener('click', function () {
+      document.getElementById('msgPopupOverlay').classList.remove('show');
+      var btn = document.querySelector('[data-panel="messages"]');
+      if (btn) btn.click();
+    });
+  }
+  var popOverlay = document.getElementById('msgPopupOverlay');
+  if (popOverlay) {
+    popOverlay.addEventListener('click', function (e) {
+      if (e.target === popOverlay) popOverlay.classList.remove('show');
+    });
+  }
+
+
   function enterDashboard() {
     gate.classList.add('hidden');
     dashboard.classList.remove('hidden');
     refreshAll();
+    startMessageLiveUpdates();
   }
 
   function showGateError(msg) {
