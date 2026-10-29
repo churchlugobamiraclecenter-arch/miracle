@@ -16,8 +16,8 @@ window.LMCC_CONFIG = {
   measurementId: "G-LP8CSWGBGN"
   },
   cloudinary: {
-    cloudName: "YOUR_CLOUDINARY_CLOUD_NAME",
-    uploadPreset: "YOUR_UNSIGNED_UPLOAD_PRESET",
+    cloudName: "r7eut0eh",
+    uploadPreset: "lugoba_gallery",
     folder: "lugoba-miracle-center"
   },
   adminEmails: [
