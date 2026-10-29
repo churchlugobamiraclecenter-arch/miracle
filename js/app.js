@@ -470,6 +470,38 @@
     return snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
   };
 
+  /** Real-time messages for admin dashboard. onNew is called only for messages after subscribe. */
+  LMCC.listenMessages = function (onUpdate, onNew) {
+    if (!db || !isAdmin) return function () {};
+    var initial = true;
+    var seen = {};
+    return db.collection('messages')
+      .orderBy('at', 'desc')
+      .limit(50)
+      .onSnapshot(function (snap) {
+        var items = snap.docs.map(function (d) {
+          return Object.assign({ id: d.id }, d.data());
+        });
+        if (onUpdate) onUpdate(items);
+        if (!initial && onNew) {
+          snap.docChanges().forEach(function (change) {
+            if (change.type === 'added') {
+              var row = Object.assign({ id: change.doc.id }, change.doc.data());
+              if (!seen[row.id]) {
+                seen[row.id] = true;
+                onNew(row);
+              }
+            }
+          });
+        } else {
+          items.forEach(function (m) { seen[m.id] = true; });
+        }
+        initial = false;
+      }, function (err) {
+        console.error('messages listener', err);
+      });
+  };
+
 
   // ── Newsletter (text in Firestore, images in Cloudinary) ────────────
   LMCC.createNewsletter = async function (title, body, imageFile, author) {
