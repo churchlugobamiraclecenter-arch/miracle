@@ -71,7 +71,7 @@
       // Force navigation (fixes mobile browsers that cancel <a> clicks when menu closes)
       setTimeout(function () {
         window.location.href = href;
-      }, 10);
+      }, 50);
     }
 
     // Capture phase so we win over other handlers
