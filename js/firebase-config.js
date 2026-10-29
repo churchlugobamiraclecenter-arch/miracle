@@ -7,7 +7,7 @@
  */
 window.LMCC_CONFIG = {
   firebase: {
-    apiKey: "AIzaSyD3JyGyVAHUt1DcFKMJVM1a5Tb5xISjKSY",
+     apiKey: "AIzaSyD3JyGyVAHUt1DcFKMJVM1a5Tb5xISjKSY",
   authDomain: "lugoba.firebaseapp.com",
   projectId: "lugoba",
   storageBucket: "lugoba.firebasestorage.app",
@@ -23,5 +23,7 @@ window.LMCC_CONFIG = {
   adminEmails: [
     "mcclfoundation@gmail.com"
   ],
-  whatsappNumber: "256704476063"
+  whatsappNumber: "256704476063",
+  // Miracle Center Church Lugoba — auto live when this channel goes live on YouTube
+  youtubeChannelId: "UCnBi7R15W7GB7E8Zc2SsrKg"
 };
