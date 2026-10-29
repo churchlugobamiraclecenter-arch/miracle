@@ -547,7 +547,6 @@ th { background: var(--beige-100); font-weight: 600; color: var(--green-900); }
   .brand-name { font-size: .82rem; }
   .brand-tag { display: none; }
 }
-
 /* WhatsApp float */
 .wa-float {
   position: fixed; right: 1.15rem; bottom: 1.15rem; z-index: 90;
