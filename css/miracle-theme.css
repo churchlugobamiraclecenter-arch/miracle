@@ -247,7 +247,7 @@ p { margin: 0 0 1em; }
 /* Hero */
 .hero {
   position: relative; isolation: isolate; color: var(--white);
-  min-height: min(88vh, 600px);
+  min-height: min(88vh, 500px);
   display: flex; align-items: center; justify-content: center;
   text-align: center; overflow: hidden;
 }
@@ -266,7 +266,7 @@ p { margin: 0 0 1em; }
 }
 .hero-content {
   position: relative; z-index: 2;
-  max-width: 860px; padding: 3rem 1.5rem;
+  max-width: 650px; padding: 3rem 1.5rem;
   animation: fadeUp .9s ease both;
 }
 @keyframes fadeUp {
