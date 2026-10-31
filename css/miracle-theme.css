@@ -247,7 +247,7 @@ p { margin: 0 0 1em; }
 /* Hero */
 .hero {
   position: relative; isolation: isolate; color: var(--white);
-  min-height: min(88vh, 500px);
+  min-height: min(88vh, 250px);
   display: flex; align-items: center; justify-content: center;
   text-align: center; overflow: hidden;
 }
