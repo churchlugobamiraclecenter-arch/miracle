@@ -380,7 +380,7 @@ p { margin: 0 0 1em; }
 
 /* Gallery */
 .gallery-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
   gap: 1.1rem;
 }
 .gallery-item {
