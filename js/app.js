@@ -1,6 +1,6 @@
 /**
  * Lugoba Miracle Center Church — Application Core
- * Real Firebase Auth + Firestore + Cloudinary.
+ * Real Firebase Auth + Firestore + Cloudinary. No demo mode.
  */
 (function () {
   'use strict';
@@ -18,6 +18,10 @@
       return Promise.reject(new Error('Config missing: upload js/firebase-config.js with your Firebase keys'));
     };
     LMCC.isAdmin = function () { return false; };
+    LMCC.sendMessage = function () {
+      return Promise.reject(new Error('Site settings did not load. Make sure js/firebase-config.js is uploaded, has no errors, then hard-refresh (Ctrl+Shift+R).'));
+    };
+    LMCC.toast = function (m) { alert(m); };
     LMCC.esc = function (s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -435,7 +439,7 @@
         .map(function (item) {
         var media;
         if (item.resourceType === 'video') {
-          media = '<video src="' + esc(LMCC.playableVideoUrl(item.url)) + '" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;background:#000"></video>';
+          media = '<video src="' + esc(LMCC.playableVideoUrl(item.url)) + '#t=0.1" muted playsinline preload="metadata"></video><span class="play-badge">&#9654;</span>';
         } else {
           media = '<img src="' + esc(item.url) + '" alt="' + esc(item.caption || 'Church photo') + '" loading="lazy">';
         }
@@ -444,17 +448,33 @@
           '<div class="caption">' + esc(item.caption || '') + (item.resourceType === 'video' ? ' · Video' : '') + '</div></div>';
       }).join('');
       updateAuthUI();
+      el._items = items;
       if (!el._delBound) {
         el._delBound = true;
         el.addEventListener('click', async function (e) {
           var b = e.target.closest('[data-del-gallery]');
-          if (!b) return;
-          if (!confirm('Delete this photo/video from the gallery?')) return;
-          try {
-            await LMCC.deleteGalleryItem(b.getAttribute('data-del-gallery'));
-            var card = b.closest('.gallery-item');
-            if (card) card.remove();
-          } catch (err) { toast(err.message || 'Delete failed', 'error'); }
+          if (b) {
+            e.stopPropagation();
+            if (!confirm('Delete this photo/video from the gallery?')) return;
+            try {
+              var delId = b.getAttribute('data-del-gallery');
+              await LMCC.deleteGalleryItem(delId);
+              el._items = (el._items || []).filter(function (x) { return x.id !== delId; });
+              var card = b.closest('.gallery-item');
+              if (card) card.remove();
+            } catch (err) { toast(err.message || 'Delete failed', 'error'); }
+            return;
+          }
+          var cardEl = e.target.closest('.gallery-item');
+          if (!cardEl) return;
+          var list = el._items || [];
+          var idx = list.findIndex(function (x) { return x.id === cardEl.getAttribute('data-id'); });
+          if (idx < 0) return;
+          LMCC.openLightbox(list.map(function (x) {
+            return { type: x.resourceType === 'video' ? 'video' : 'image',
+                     url: x.resourceType === 'video' ? LMCC.playableVideoUrl(x.url) : x.url,
+                     caption: x.caption || '' };
+          }), idx);
         });
       }
     } catch (err) {
@@ -463,7 +483,164 @@
     }
   };
 
+  // ── Lightbox: view any photo/video in full ──────────────────────────
+  var lb = null, lbItems = [], lbIdx = 0;
+  function lbShow() {
+    var it = lbItems[lbIdx];
+    if (!it) return;
+    var stage = lb.querySelector('.lb-stage');
+    stage.innerHTML = '';
+    var node;
+    if (it.type === 'video') {
+      node = document.createElement('video');
+      node.src = it.url; node.controls = true; node.autoplay = true; node.playsInline = true;
+    } else {
+      node = document.createElement('img');
+      node.src = it.url; node.alt = it.caption || '';
+    }
+    stage.appendChild(node);
+    lb.querySelector('.lb-cap').textContent = it.caption || '';
+    var multi = lbItems.length > 1;
+    lb.querySelector('.lb-prev').style.display = multi ? '' : 'none';
+    lb.querySelector('.lb-next').style.display = multi ? '' : 'none';
+  }
+  function lbClose() {
+    if (!lb) return;
+    lb.hidden = true;
+    lb.querySelector('.lb-stage').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  function lbStep(d) {
+    if (!lbItems.length) return;
+    lbIdx = (lbIdx + d + lbItems.length) % lbItems.length;
+    lbShow();
+  }
+  function buildLightbox() {
+    if (lb) return;
+    lb = document.createElement('div');
+    lb.className = 'lb';
+    lb.hidden = true;
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.innerHTML = '<button type="button" class="lb-close" aria-label="Close">&times;</button>' +
+      '<button type="button" class="lb-nav lb-prev" aria-label="Previous">&#10094;</button>' +
+      '<div class="lb-stage"></div>' +
+      '<button type="button" class="lb-nav lb-next" aria-label="Next">&#10095;</button>' +
+      '<div class="lb-cap"></div>';
+    document.body.appendChild(lb);
+    lb.querySelector('.lb-close').addEventListener('click', lbClose);
+    lb.querySelector('.lb-prev').addEventListener('click', function (e) { e.stopPropagation(); lbStep(-1); });
+    lb.querySelector('.lb-next').addEventListener('click', function (e) { e.stopPropagation(); lbStep(1); });
+    lb.addEventListener('click', function (e) {
+      if (e.target === lb || e.target.classList.contains('lb-stage')) lbClose();
+    });
+    var x0 = null;
+    lb.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', function (e) {
+      if (x0 == null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (lb.hidden) return;
+      if (e.key === 'Escape') lbClose();
+      else if (e.key === 'ArrowLeft') lbStep(-1);
+      else if (e.key === 'ArrowRight') lbStep(1);
+    });
+  }
+  /** items: [{type:'image'|'video', url, caption}] */
+  LMCC.openLightbox = function (items, index) {
+    if (!items || !items.length) return;
+    buildLightbox();
+    lbItems = items;
+    lbIdx = index || 0;
+    lb.hidden = false;
+    document.body.style.overflow = 'hidden';
+    lbShow();
+  };
+
+  // ── Home page photo slider (full photos, auto-sliding) ──────────────
+  LMCC.initHomeSlider = async function () {
+    var root = $('#homeSlider');
+    if (!root || LMCC._sliderStarted) return;
+    LMCC._sliderStarted = true;
+    var items = [];
+    try {
+      var g = await LMCC.getGallery();
+      items = g.filter(function (x) { return x.resourceType !== 'video' && x.url; })
+        .slice(0, 12)
+        .map(function (x) { return { type: 'image', url: x.url, caption: x.caption || '' }; });
+    } catch (e) { /* fall back to the church photos below */ }
+    if (!items.length) {
+      items = [
+        { type: 'image', url: 'images/pastors-service.jpg', caption: 'Our Pastors' },
+        { type: 'image', url: 'images/worship-celebration.jpg', caption: 'Celebration & Praise' },
+        { type: 'image', url: 'images/congregation-leaders.jpg', caption: 'Church Leaders' },
+        { type: 'image', url: 'images/women-ministry.jpg', caption: 'Women of Faith' },
+        { type: 'image', url: 'images/worship-drums.jpg', caption: 'Worship Team' }
+      ];
+    }
+    root.innerHTML = '';
+    items.forEach(function (it, i) {
+      var s = document.createElement('div');
+      s.className = 'ps-slide' + (i === 0 ? ' active' : '');
+      s.style.setProperty('--img', 'url("' + new URL(it.url, document.baseURI).href.replace(/"/g, '%22') + '")');
+      var im = document.createElement('img');
+      im.src = it.url; im.alt = it.caption || 'Church photo';
+      if (i > 0) im.loading = 'lazy';
+      s.appendChild(im);
+      s.addEventListener('click', function () { LMCC.openLightbox(items, i); });
+      root.appendChild(s);
+    });
+    var cap = document.createElement('div');
+    cap.className = 'ps-caption';
+    root.appendChild(cap);
+    var idx = 0, timer = null, dots = [];
+    function go(n) {
+      var slides = root.querySelectorAll('.ps-slide');
+      slides[idx].classList.remove('active');
+      if (dots[idx]) dots[idx].classList.remove('active');
+      idx = (n + slides.length) % slides.length;
+      slides[idx].classList.add('active');
+      if (dots[idx]) dots[idx].classList.add('active');
+      cap.textContent = items[idx].caption || '';
+    }
+    function restart() { clearInterval(timer); timer = setInterval(function () { go(idx + 1); }, 4500); }
+    if (items.length > 1) {
+      var prev = document.createElement('button');
+      prev.type = 'button'; prev.className = 'ps-nav ps-prev'; prev.setAttribute('aria-label', 'Previous photo'); prev.innerHTML = '&#10094;';
+      var next = document.createElement('button');
+      next.type = 'button'; next.className = 'ps-nav ps-next'; next.setAttribute('aria-label', 'Next photo'); next.innerHTML = '&#10095;';
+      prev.addEventListener('click', function () { go(idx - 1); restart(); });
+      next.addEventListener('click', function () { go(idx + 1); restart(); });
+      root.appendChild(prev); root.appendChild(next);
+      var dw = document.createElement('div');
+      dw.className = 'ps-dots';
+      items.forEach(function (_, i) {
+        var d = document.createElement('button');
+        d.type = 'button'; d.className = 'ps-dot' + (i === 0 ? ' active' : '');
+        d.setAttribute('aria-label', 'Photo ' + (i + 1));
+        d.addEventListener('click', function () { go(i); restart(); });
+        dots.push(d); dw.appendChild(d);
+      });
+      root.appendChild(dw);
+      var x0 = null;
+      root.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+      root.addEventListener('touchend', function (e) {
+        if (x0 == null) return;
+        var dx = e.changedTouches[0].clientX - x0; x0 = null;
+        if (Math.abs(dx) > 50) { go(idx + (dx < 0 ? 1 : -1)); restart(); }
+      });
+      root.addEventListener('mouseenter', function () { clearInterval(timer); });
+      root.addEventListener('mouseleave', restart);
+      restart();
+    }
+    cap.textContent = items[0].caption || '';
+  };
+
   LMCC.getHero = async function () {
+
     var defaults = {
       type: 'slideshow',
       slides: [
@@ -1061,7 +1238,8 @@
 
   async function initHeroSlideshow() {
     var container = $('#heroSection');
-    if (!container) return;
+    if (!container || container._heroStarted) return;
+    container._heroStarted = true;
 
     var hero = await LMCC.getHero();
 
@@ -1090,7 +1268,7 @@
     slides.forEach(function (src, i) {
       var d = document.createElement('div');
       d.className = 'hero-slide' + (i === 0 ? ' active' : '');
-      d.style.backgroundImage = "url('" + src + "')";
+      d.style.setProperty('--img', 'url("' + new URL(src, document.baseURI).href.replace(/"/g, '%22') + '")');
       slidesWrap.appendChild(d);
     });
     container.insertBefore(slidesWrap, container.firstChild);
@@ -1148,11 +1326,14 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initMobileMenu();
+    // If Firebase is slow or blocked, still show the church photos after a moment
+    setTimeout(function () { initHeroSlideshow(); LMCC.initHomeSlider(); }, 3500);
     ensureFirebaseScripts(function () {
       initFirebase();
       initHeroSlideshow();
       if ($('#galleryGrid')) LMCC.renderGallery('#galleryGrid');
       if ($('#newsletterList')) LMCC.renderNewsletters('#newsletterList');
+      LMCC.initHomeSlider();
     });
 
     var btn = document.getElementById('btnSignOut');
