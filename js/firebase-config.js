@@ -7,7 +7,7 @@ window.LMCC_CONFIG = {
   storageBucket: "lugoba.firebasestorage.app",
   messagingSenderId: "959628417659",
   appId: "1:959628417659:web:7a3e563e39b6404402e0de",
-  measurementId: "G-LP8CSWGBGN
+  measurementId: "G-LP8CSWGBGN"
   },
   cloudinary: {
     cloudName: "r7eut0eh",
