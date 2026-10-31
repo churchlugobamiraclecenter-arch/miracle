@@ -21,7 +21,7 @@ window.LMCC_CONFIG = {
     folder: "lugoba-miracle-center"
   },
   adminEmails: [
-    "mcclfoundation@gmail.com"
+    "churchlugobamiraclecenter@gmail.com"
   ],
   whatsappNumber: "256704476063",
   // Miracle Center Church Lugoba — auto live when this channel goes live on YouTube
