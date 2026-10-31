@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ────────────────────────────────────────────────────────
+    function signedIn() { return request.auth != null; }
+
+    function profilePath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+    function hasProfile() { return signedIn() && exists(profilePath()); }
+    function profile()    { return get(profilePath()).data; }
+
+    // EDIT THIS LIST to match adminEmails in js/firebase-config.js.
+    // The email must be verified (Google sign-in always is).
+    function isListedAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['churchlugobamiraclecenter@gmail.com'];
+    }
+    function isAdmin() {
+      return isListedAdmin()
+        || (hasProfile() && profile().role == 'admin' && profile().status == 'approved');
+    }
+    function isApproved() {
+      return isAdmin() || (hasProfile() && profile().status == 'approved');
+    }
+
+    // ── members ────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // a member can read only their own profile; admin can read all
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+
+      // a new member can only create THEMSELVES as pending/member (no self-approval)
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == userId
+            && request.resource.data.status == 'pending'
+            && request.resource.data.role == 'member');
+
+      // members may edit their own details, but never role / status / approval fields
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == userId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['role', 'status', 'approvedAt', 'approvedBy', 'rejectedAt']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ── public content, admin-controlled ───────────────────────────────
+    match /gallery/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /newsletters/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{id}    { allow read: if true; allow write: if isAdmin(); }
+
+    // ── contact form: anyone may send, only admin may read / delete ────
+    match /messages/{id} {
+      allow create: if request.resource.data.message is string
+                    && request.resource.data.message.size() > 0
+                    && request.resource.data.message.size() <= 2000
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() <= 120;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── live stream: approved members only; admin can delete anything ──
+    match /livestream_comments/{id} {
+      allow read: if isApproved();
+      allow create: if isApproved()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 500;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    match /recordings/{id} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+  }
+}

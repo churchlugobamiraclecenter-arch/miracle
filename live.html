@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Stream | Lugoba Miracle Center Church</title>
+  <meta name="theme-color" content="#1b5a39">
+  <link rel="stylesheet" href="css/miracle-theme.css">
+  <style>
+    .live-layout {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 1.4rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .live-layout { grid-template-columns: 1fr; }
+    }
+    .live-player-wrap {
+      background: #0a0a0a;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 3px solid var(--gold-500);
+      aspect-ratio: 16/9;
+      position: relative;
+    }
+    .live-player-wrap iframe,
+    .live-player-wrap video {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000;
+      object-fit: contain;
+    }
+    .live-badge {
+      position: absolute; top: 12px; left: 12px; z-index: 2;
+      background: #e11d48; color: #fff; font-weight: 800; font-size: .72rem;
+      letter-spacing: .12em; padding: .35rem .7rem; border-radius: 999px;
+      display: none; align-items: center; gap: .35rem;
+    }
+    .live-badge.on { display: inline-flex; }
+    .live-badge i { font-size: .55rem; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .live-chat {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border-top: 4px solid var(--gold-500);
+      display: flex; flex-direction: column;
+      min-height: 420px; max-height: 560px;
+    }
+    .live-chat-head {
+      padding: 1rem 1.1rem; border-bottom: 1px solid var(--beige-200);
+      font-weight: 700; color: var(--green-900);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .live-chat-body {
+      flex: 1; overflow-y: auto; padding: 1rem;
+      background: var(--beige-50);
+    }
+    .chat-line {
+      background: #fff; border-radius: 12px; padding: .65rem .85rem;
+      margin-bottom: .55rem; box-shadow: var(--shadow-sm); font-size: .9rem;
+    }
+    .chat-line .who { font-weight: 700; color: var(--green-700); font-size: .8rem; }
+    .chat-line .when { color: var(--ink-soft); font-size: .72rem; margin-left: .4rem; }
+    .live-chat-form {
+      display: flex; gap: .5rem; padding: .8rem;
+      border-top: 1px solid var(--beige-200);
+    }
+    .live-chat-form input {
+      flex: 1; border: 1.5px solid var(--beige-200); border-radius: 999px;
+      padding: .65rem 1rem; font: inherit;
+    }
+    .live-chat-form button {
+      border: 0; background: var(--green-700); color: #fff;
+      border-radius: 999px; padding: 0 1.1rem; font-weight: 700; cursor: pointer;
+    }
+    .gate-card { max-width: 480px; margin: 2rem auto; text-align: center; }
+    .offline-box {
+      display: grid; place-items: center; height: 100%; color: #ddd; text-align: center; padding: 2rem;
+      background: linear-gradient(160deg, #0e2f1e, #14432b);
+    }
+    .offline-box img {
+      width: min(100%, 420px); border-radius: 12px; margin-bottom: 1rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+    .rec-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem; margin-top: 1rem;
+    }
+    .rec-card video, .rec-card iframe {
+      width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 10px; background: #000;
+    }
+  </style>
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+</head>
+<body>
+<div class="topbar">
+  <div class="container">
+    <span class="license">Live Stream · Approved members only</span>
+    <span>
+      <a href="login.html" class="auth-guest">LOGIN</a>
+      <span class="auth-guest"> · </span>
+      <a href="create-account.html" class="auth-guest">Create account</a>
+      <span class="auth-user hidden"><span class="auth-status"><span class="avatar auth-avatar">M</span> <span class="auth-display-name">Member</span></span></span>
+    </span>
+  </div>
+</div>
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <img src="images/logo.png" alt="Lugoba Miracle Center Church logo" width="52" height="52">
+      <span class="brand-text">
+        <span class="brand-name">Lugoba Miracle Center</span>
+        <span class="brand-tag">A Place of Love and Holiness</span>
+      </span>
+    </a>
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <nav class="nav" id="nav">
+      <a href="index.html">HOME</a>
+      <a href="about.html">ABOUT</a>
+      <a href="other-services.html">SERVICES</a>
+      <a href="live.html" aria-current="page">LIVE</a>
+      <a href="gallery.html">GALLERY</a>
+      <a href="newsletter.html">NEWSLETTER</a>
+      <a href="admin.html" class="auth-admin hidden">ADMIN</a>
+      <a class="btn btn-primary" href="create-account.html">JOIN FELLOWSHIP</a>
+    </nav>
+  </div>
+</header>
+<div class="nav-backdrop" id="navBackdrop" hidden></div>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Live Stream</h1>
+    <p>When the church goes live on YouTube, it appears here automatically. Approved members can watch and comment.</p>
+  </div>
+</section>
+
+<main class="section">
+  <div class="container">
+    <!-- Auth / approval gate -->
+    <div id="liveGate" class="form-card gate-card">
+      <h2>Members only</h2>
+      <p class="sub">Sign in with an account approved by the church admin to watch and comment on the live stream.</p>
+      <div id="gateMsg"></div>
+      <div class="form-actions">
+        <a class="btn btn-primary" href="login.html">Sign in</a>
+        <a class="btn btn-outline-dark" href="create-account.html">Create account</a>
+      </div>
+    </div>
+
+    <!-- Player + chat (shown when approved) -->
+    <div id="liveApp" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem">
+        <div>
+          <h2 id="liveTitle" style="margin:0">Live Service</h2>
+          <p id="liveDesc" style="margin:.35rem 0 0;color:var(--ink-soft)"></p>
+        </div>
+        <span id="liveStatusLabel" class="badge badge-pending">Checking…</span>
+      </div>
+
+      <div class="live-layout">
+        <div>
+          <div class="live-player-wrap">
+            <span class="live-badge" id="liveBadge"><i class="fas fa-circle"></i> LIVE</span>
+            <div id="playerHost">
+              <div class="offline-box">
+                <img src="images/worship-celebration.jpg" alt="Church">
+                <p><strong>Stream offline</strong><br>When the church goes live, the broadcast will appear here in HD.</p>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:.85rem;color:var(--ink-soft);margin-top:.8rem">
+            Best quality is achieved with YouTube Live or a high-resolution video feed set by the admin.
+          </p>
+        </div>
+
+        <div class="live-chat">
+          <div class="live-chat-head">
+            <span><i class="fas fa-comments"></i> Live comments</span>
+            <span style="font-size:.78rem;font-weight:500;color:var(--ink-soft)">Real-time · Approved members</span>
+          </div>
+          <div class="live-chat-body" id="chatBody">
+            <p style="text-align:center;color:var(--ink-soft);font-size:.9rem">No comments yet. Be the first to greet the church.</p>
+          </div>
+          <form class="live-chat-form" id="chatForm">
+            <input type="text" id="chatInput" maxlength="500" placeholder="Write a comment or prayer…" autocomplete="off">
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Recordings -->
+      <div style="margin-top:2.8rem">
+        <div class="section-head" style="margin-bottom:1rem">
+          <h2>Recordings</h2>
+          <div class="divider"></div>
+          <p>Past services saved by admin (and members where allowed).</p>
+        </div>
+        <div class="rec-grid" id="recordingsGrid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom" style="margin-top:0;border:0">
+      <span>© 2026 Lugoba Miracle Center Church</span>
+    </div>
+  </div>
+</footer>
+<a class="wa-float" href="https://wa.me/256704476063" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+(function () {
+  var gate = document.getElementById('liveGate');
+  var app = document.getElementById('liveApp');
+  var entered = false;            // enterLive must only ever run once
+  var unsubComments = null, unsubStream = null;
+  var lastSig = null;             // what the player is currently showing
+  var isAdminView = false;
+  var esc = function (v) { return LMCC.esc(v); };
+
+  function youtubeEmbed(url) {
+    if (!url) return '';
+    if (url.indexOf('youtube.com/embed/') !== -1) {
+      return url + (url.indexOf('?') === -1 ? '?' : '&') + (url.indexOf('autoplay=') === -1 ? 'autoplay=1&mute=1&playsinline=1&rel=0' : '');
+    }
+    var m = url.match(/(?:youtu\.be\/|v=|\/live\/|\/embed\/)([A-Za-z0-9_-]{6,})/);
+    if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1&playsinline=1&rel=0';
+    return url;
+  }
+
+  var IFRAME_ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+
+  function iframe(src) {
+    return '<iframe src="' + esc(src) + '" allow="' + IFRAME_ALLOW + '" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Live stream"></iframe>';
+  }
+
+  /** Works out what the player SHOULD show. Returns {sig, html, badge, label, labelClass}. */
+  function plan(live) {
+    live = live || {};
+    var thumb = live.thumbnailUrl || 'images/worship-celebration.jpg';
+    var offline = {
+      sig: 'offline|' + thumb,
+      badge: false, label: 'Offline', labelClass: 'badge badge-pending',
+      html: '<div class="offline-box"><img src="' + esc(thumb) + '" alt=""><p><strong>Stream offline</strong><br>When the church goes live, it will appear here automatically.</p></div>'
+    };
+    // Admin switched the Live page off → always offline (this also applies in YouTube-channel mode)
+    if (live.active === false || (!live.active && !live.youtubeChannelId)) return offline;
+
+    var channelEmbed = '';
+    if (live.youtubeChannelId) channelEmbed = LMCC.youtubeChannelLiveEmbed(live.youtubeChannelId);
+    else if (live.embedUrl && live.embedUrl.indexOf('live_stream?channel=') !== -1) channelEmbed = live.embedUrl;
+
+    if (channelEmbed) {
+      return {
+        sig: 'channel|' + channelEmbed,
+        badge: false, label: 'YOUTUBE · AUTO', labelClass: 'badge badge-approved',
+        html: iframe(channelEmbed)
+      };
+    }
+    var src = live.embedUrl || live.streamUrl;
+    if (!src) return offline;
+    var provider = live.provider || 'youtube';
+    var html;
+    if (provider === 'youtube' || /youtu/.test(src)) html = iframe(youtubeEmbed(src));
+    else if (provider === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(src) || /cloudinary/.test(src))
+      html = '<video src="' + esc(LMCC.playableVideoUrl(src)) + '" controls autoplay muted playsinline poster="' + esc(thumb) + '"></video>';
+    else html = iframe(src);
+    return { sig: 'manual|' + src + '|' + provider, badge: true, label: 'LIVE NOW', labelClass: 'badge badge-approved', html: html };
+  }
+
+  function renderPlayer(live) {
+    document.getElementById('liveTitle').textContent = (live && live.title) || 'Live Service';
+    document.getElementById('liveDesc').textContent = (live && live.description) ||
+      (live && live.youtubeChannelId ? 'Connected to the church YouTube channel. When the church goes live on YouTube, it appears here. Tap the speaker icon on the video to unmute.' : '');
+
+    var p = plan(live);
+    if (p.sig === lastSig) return;          // nothing changed → do NOT touch the player (prevents reload/buffering)
+    lastSig = p.sig;
+    document.getElementById('liveBadge').classList.toggle('on', p.badge);
+    var label = document.getElementById('liveStatusLabel');
+    label.className = p.labelClass;
+    label.textContent = p.label;
+    document.getElementById('playerHost').innerHTML = p.html;
+  }
+
+  function renderComments(items, err) {
+    var body = document.getElementById('chatBody');
+    if (err) {
+      body.innerHTML = '<p style="text-align:center;color:#c5221f;font-size:.9rem">Comments could not load (' + esc(err.code || 'error') + '). The church admin needs to publish the Firestore rules.</p>';
+      return;
+    }
+    if (!items.length) {
+      body.innerHTML = '<p style="text-align:center;color:var(--ink-soft);font-size:.9rem">No comments yet. Be the first to greet the church.</p>';
+      return;
+    }
+    var stick = body.scrollTop + body.clientHeight >= body.scrollHeight - 60;
+    body.innerHTML = items.map(function (c) {
+      var when = c.createdAt && c.createdAt.toDate ? c.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      var del = isAdminView ? ' <button type="button" class="chat-del" data-del-comment="' + esc(c.id) + '" title="Delete comment" style="border:0;background:none;color:#c5221f;cursor:pointer;font-weight:700;float:right">✕</button>' : '';
+      return '<div class="chat-line">' + del + '<span class="who">' + esc(c.displayName || 'Member') +
+        '</span><span class="when">' + when + '</span><div>' + esc(c.text) + '</div></div>';
+    }).join('');
+    if (stick) body.scrollTop = body.scrollHeight;
+  }
+
+  document.getElementById('chatBody').addEventListener('click', async function (e) {
+    var btn = e.target.closest('[data-del-comment]');
+    if (!btn) return;
+    try { await LMCC.deleteLiveComment(btn.getAttribute('data-del-comment')); }
+    catch (err) { alert(err.message || 'Could not delete'); }
+  });
+
+  function recMedia(r) {
+    var url = r.url || '';
+    if (/youtu/.test(url)) {
+      var m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/live\/)([A-Za-z0-9_-]{6,})/);
+      return m ? '<iframe src="https://www.youtube.com/embed/' + esc(m[1]) + '" allowfullscreen loading="lazy"></iframe>'
+               : '<a href="' + esc(url) + '" target="_blank" rel="noopener">Watch recording</a>';
+    }
+    return '<video src="' + esc(LMCC.playableVideoUrl(url)) + '" controls playsinline preload="metadata" poster="images/worship-celebration.jpg"></video>';
+  }
+
+  async function loadRecordings() {
+    var grid = document.getElementById('recordingsGrid');
+    try {
+      var list = await LMCC.getRecordings();
+      if (!list.length) { grid.innerHTML = '<p style="color:var(--ink-soft)">No recordings saved yet.</p>'; return; }
+      grid.innerHTML = list.map(function (r) {
+        var del = isAdminView ? '<button type="button" class="btn btn-outline-dark btn-sm" data-del-rec="' + esc(r.id) + '" style="margin-top:.6rem">Delete recording</button>' : '';
+        return '<div class="card rec-card"><h3 style="font-size:1rem">' + esc(r.title || 'Recording') + '</h3>' + recMedia(r) + del + '</div>';
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<p style="color:#c5221f">Could not load recordings.</p>';
+    }
+  }
+
+  document.getElementById('recordingsGrid').addEventListener('click', async function (e) {
+    var btn = e.target.closest('[data-del-rec]');
+    if (!btn) return;
+    if (!confirm('Delete this recording from the site?')) return;
+    try { await LMCC.deleteRecording(btn.getAttribute('data-del-rec')); loadRecordings(); }
+    catch (err) { alert(err.message || 'Could not delete'); }
+  });
+
+  function enterLive(admin) {
+    if (entered) return;                    // fixes double start (auth event + fallback timer)
+    entered = true;
+    isAdminView = !!admin;
+    gate.classList.add('hidden');
+    app.classList.remove('hidden');
+    unsubStream = LMCC.listenLiveStream(function (live, err) {
+      if (err) { renderPlayer({ active: false }); return; }
+      renderPlayer(live || { active: false });
+    });
+    unsubComments = LMCC.listenLiveComments(renderComments);
+    loadRecordings();
+  }
+
+  function showGate(msg) {
+    entered = false;
+    if (unsubStream) { unsubStream(); unsubStream = null; }
+    if (unsubComments) { unsubComments(); unsubComments = null; }
+    lastSig = null;
+    gate.classList.remove('hidden');
+    app.classList.add('hidden');
+    document.getElementById('gateMsg').innerHTML = msg ? '<div class="alert alert-warning">' + msg + '</div>' : '';
+  }
+
+  document.addEventListener('lmcc:auth', function (e) {
+    var user = e.detail.user, profile = e.detail.profile, admin = e.detail.isAdmin;
+    if (!user) return showGate('Please sign in with your fellowship account.');
+    if (admin || (profile && profile.status === 'approved')) return enterLive(admin);
+    if (profile && profile.status === 'rejected') return showGate('This account has not been approved for the live stream. Please contact the church office.');
+    if (profile && profile.status === 'pending') return showGate('Your account is pending admin approval. Once approved, you can watch and comment on the live stream.');
+    showGate('Only approved members can join the live stream. Contact the church office if you need help.');
+  });
+
+  document.getElementById('chatForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var input = document.getElementById('chatInput');
+    var btn = e.target.querySelector('button');
+    if (!input.value.trim()) return;
+    btn.disabled = true;
+    try {
+      await LMCC.postLiveComment(input.value);
+      input.value = '';
+    } catch (err) {
+      alert(err.message || 'Could not send');
+    }
+    btn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
