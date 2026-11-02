@@ -161,3 +161,25 @@ Live multi-viewer HD video still works best via **YouTube Live URL** while comme
 5. **Admin login:** easiest is **Continue with Google** using `mcclfoundation@gmail.com`. For email + password, the email must be verified (a link is sent on first sign-in).
 
 Deleting a photo removes it from the website. The original file stays in your Cloudinary Media Library and can be removed there.
+
+
+## Relworx donations (MTN / Airtel PIN prompt)
+
+`donate.html` talks to two Firebase Cloud Functions in `functions/`. The Relworx API key and
+business account number are stored as Firebase **secrets**, never in the website files.
+
+Deploy once (needs the Firebase **Blaze** plan, which has a free monthly allowance):
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase use lugoba
+cd functions && npm install && cd ..
+firebase functions:secrets:set RELWORX_API_KEY        # paste your (new) Relworx API key
+firebase functions:secrets:set RELWORX_ACCOUNT_NO     # paste your Relworx business account number
+firebase deploy --only functions,firestore:rules
+```
+
+Then confirm `relworxApiBase` in `js/firebase-config.js` matches the URLs printed by the deploy.
+Paid, failed and pending gifts appear in the Firestore `donations` collection (status `paid` is set
+only by the server after Relworx confirms the amount). Bank transfers stay manual.
