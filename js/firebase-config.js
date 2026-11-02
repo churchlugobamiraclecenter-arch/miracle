@@ -34,7 +34,7 @@ window.LMCC_CONFIG = {
     // Relworx automatic PIN prompt (MTN / Airtel). The API key lives ONLY in the
     // Firebase Cloud Functions secrets - never here. After deploying the functions,
     // this is the base URL they are served from. Leave empty to use manual mode.
-    relworxApiBase: "https://us-central1-lugoba.cloudfunctions.net"
+   relworxApiBase: "https://lugoba-pay.churchlugobamiraclecenter.workers.dev"
   },
   // Miracle Center Church Lugoba — auto live when this channel goes live on YouTube
   youtubeChannelId: "UCnBi7R15W7GB7E8Zc2SsrKg"
