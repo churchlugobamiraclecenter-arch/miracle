@@ -114,29 +114,28 @@ WhatsApp +256 704 476 063 · mcclfoundation@gmail.com
 Senior Pastor Teopisther Najjuma · Branch Pastor Robert Kalyowa
 
 
-## Live stream
+## Live stream (website platform — independent)
 
 - Page: `live.html` — only **approved** members (or admins) can watch and comment.
-- Admin starts stream from **Admin → Live Stream** with a YouTube Live URL (best HD quality) or direct video URL.
+- **Primary:** Admin goes live from **Admin → Live Stream → Website Live Studio** (camera or screen share). Stream is built into the website (WebRTC). No YouTube required.
+- Members watch in HD (when device/connection allows), comment in real time, and can **invite others** with a shareable live link (WhatsApp, Facebook, copy link).
+- Optional: still link a YouTube channel for very large audiences.
 - Comments: Firestore `livestream_comments` (real-time).
-- Settings: `settings/livestream`.
-- Recordings: collection `recordings` (URL + title).
+- Settings: `settings/livestream` (`mode: native` or YouTube).
+- Signaling rooms: `live_rooms/{sessionId}/viewers/...` (WebRTC).
+- Recordings: collection `recordings` (Cloudinary URL + title). Admin can auto-record while live and upload to Cloudinary when the live ends.
 
-Firestore rules for the live stream are already included in `firestore.rules`.
+Publish the updated **`firestore.rules`** (includes `live_rooms` signaling rules).
 
-**Quality tip:** Use YouTube Live Studio for professional image quality and automatic recording, then paste the video link under “Save recording”.
+### How to go live on the website
 
+1. Open **Admin → Live Stream**
+2. Enter a title → **Open camera (HD)** or **Share screen**
+3. Press **GO LIVE on website**
+4. Keep that browser tab open. Share the invite link with members.
+5. Press **End live** when finished (optional Cloudinary upload of the recording).
 
-### Advanced recording → Cloudinary
-
-From **Admin → Live Stream**:
-
-1. **Open camera** or **Share screen**
-2. **Start recording** (browser MediaRecorder, HD when device supports it)
-3. **Stop & upload** — video is uploaded to Cloudinary folder `recordings` and saved in Firestore `recordings`
-4. Members see it under **Recordings** on `live.html`
-
-Live multi-viewer HD video still works best via **YouTube Live URL** while comments stay on your site. Recording can be both on YouTube and uploaded to Cloudinary.
+**HD tips:** Use Chrome/Edge on a computer, good upload speed (≥ 5 Mbps), and keep the admin tab in the foreground. For very large crowds (100+ concurrent), use the optional YouTube channel link.
 
 
 ## Important login and troubleshooting notes

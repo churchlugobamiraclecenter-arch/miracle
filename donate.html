@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Give | Lugoba Miracle Center Church</title>
+  <meta name="description" content="Give to Lugoba Miracle Center Church by MTN Mobile Money, Airtel Money or bank transfer.">
+  <meta name="theme-color" content="#1b5a39">
+  <link rel="stylesheet" href="css/miracle-theme.css">
+  <link rel="icon" type="image/jpeg" href="lugoba-logo.jpeg">
+  <style>
+    .give-wrap { max-width: 720px; margin: 0 auto; }
+    .amount-presets { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .6rem; }
+    .amount-presets button { border: 1.5px solid var(--green-700, #1b5a39); background: #fff; color: var(--green-700, #1b5a39); padding: .5rem .9rem; border-radius: 999px; font-weight: 600; cursor: pointer; }
+    .amount-presets button.active { background: var(--green-700, #1b5a39); color: #fff; }
+    .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin-bottom: 1rem; }
+    .method { position: relative; }
+    .method input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+    .method label { display: block; text-align: center; padding: .9rem .4rem; border: 2px solid #ddd; border-radius: 12px; font-weight: 700; cursor: pointer; background: #fff; }
+    .method label small { display: block; font-weight: 500; color: #666; margin-top: .2rem; }
+    .method input:checked + label { border-color: #1b5a39; background: #eef7f1; }
+    .method input:focus-visible + label { outline: 3px solid #c9a24b; }
+    .m-mtn input:checked + label { border-color: #d4a900; background: #fff8d6; }
+    .m-airtel input:checked + label { border-color: #e40000; background: #fdeaea; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 10000; }
+    .modal-bg.show { display: flex; }
+    .modal { background: #fff; color: var(--ink, #222); border-radius: 16px; max-width: 460px; width: 100%; padding: 1.5rem; max-height: 90vh; overflow: auto; }
+    .modal h3 { margin-bottom: .6rem; }
+    .pay-box { background: #f6f3ea; border-radius: 12px; padding: 1rem; margin: .8rem 0; }
+    .pay-box .row { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px dashed #d8d2bf; }
+    .pay-box .row:last-child { border-bottom: 0; }
+    .pay-box .row span:first-child { color: #666; }
+    .pay-box .row strong { text-align: right; overflow-wrap: anywhere; }
+    .copy-btn { border: 0; background: #1b5a39; color: #fff; border-radius: 6px; padding: .15rem .55rem; margin-left: .4rem; font-size: .75rem; cursor: pointer; }
+    .modal-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+    .note { font-size: .85rem; color: #666; }
+    .warn { background: #fef7e0; color: #7a4b00; border-left: 4px solid #b06000; padding: .6rem .8rem; border-radius: 8px; font-size: .88rem; margin: .6rem 0; }
+    .spinner { width: 42px; height: 42px; margin: .8rem auto; border: 4px solid #e3ecdf; border-top-color: #1b5a39; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 520px) { .methods { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="container">
+    <span class="license">Licensed Uganda-Based Organisation · Est. 2021</span>
+    <span>
+      <a href="login.html" class="auth-guest">LOGIN</a>
+      <span class="auth-guest"> · </span>
+      <a href="create-account.html" class="auth-guest">Create account</a>
+      <span class="auth-user hidden"><span class="auth-status"><span class="avatar auth-avatar">M</span> <span class="auth-display-name">Member</span></span></span>
+    </span>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="index.html" aria-label="Lugoba Miracle Center Church">
+      <img src="lugoba-logo.jpeg" alt="Lugoba Miracle Center Church logo" width="52" height="52">
+      <span class="brand-text">
+        <span class="brand-name">Lugoba Miracle Center</span>
+        <span class="brand-tag">A Place of Love and Holiness</span>
+      </span>
+    </a>
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <nav class="nav" id="nav" aria-label="Main navigation">
+      <a href="index.html">HOME</a>
+      <a href="about.html">ABOUT</a>
+      <a href="other-services.html">SERVICES</a>
+      <a href="live.html">LIVE</a>
+      <a href="gallery.html">GALLERY</a>
+      <a href="donate.html" aria-current="page">GIVE</a>
+      <a href="newsletter.html">NEWSLETTER</a>
+      <a href="privacy.html">PRIVACY</a>
+      <a href="admin.html" class="auth-admin hidden">ADMIN</a>
+      <a class="btn btn-primary" href="create-account.html">JOIN FELLOWSHIP</a>
+    </nav>
+  </div>
+</header>
+<div class="nav-backdrop" id="navBackdrop" hidden></div>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Give</h1>
+    <p>“Each of you should give what you have decided in your heart to give.” — 2 Corinthians 9:7</p>
+  </div>
+</section>
+
+<main class="section">
+  <div class="container give-wrap">
+    <div class="card">
+      <h3>Make a donation</h3>
+      <p class="note">Choose how you want to give. Mobile Money gifts are confirmed automatically; you can then send your receipt to the church on WhatsApp.</p>
+
+      <form id="giveForm" novalidate>
+        <div class="field">
+          <label for="dName">Full name</label>
+          <input type="text" id="dName" maxlength="120" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="dPhone">Your phone number</label>
+          <input type="tel" id="dPhone" placeholder="07xx xxx xxx" autocomplete="tel" required>
+        </div>
+        <div class="field">
+          <label for="dEmail">Email (optional)</label>
+          <input type="email" id="dEmail" maxlength="160" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="dPurpose">Giving towards</label>
+          <select id="dPurpose">
+            <option>Tithe</option>
+            <option>Offering</option>
+            <option>Building Fund</option>
+            <option>Missions &amp; Outreach</option>
+            <option>Support the Needy</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dAmount">Amount (UGX)</label>
+          <div class="amount-presets" id="presets">
+            <button type="button" data-v="5000">5,000</button>
+            <button type="button" data-v="10000">10,000</button>
+            <button type="button" data-v="20000">20,000</button>
+            <button type="button" data-v="50000">50,000</button>
+            <button type="button" data-v="100000">100,000</button>
+          </div>
+          <input type="number" id="dAmount" inputmode="numeric" min="1000" step="500" placeholder="Enter amount" required>
+        </div>
+
+        <div class="field">
+          <label>Payment method</label>
+          <div class="methods">
+            <div class="method m-mtn">
+              <input type="radio" name="method" id="mMtn" value="mtn" checked>
+              <label for="mMtn"><i class="fas fa-mobile-alt"></i> MTN MoMo<small>Mobile Money</small></label>
+            </div>
+            <div class="method m-airtel">
+              <input type="radio" name="method" id="mAirtel" value="airtel">
+              <label for="mAirtel"><i class="fas fa-mobile-alt"></i> Airtel Money<small>Mobile Money</small></label>
+            </div>
+            <div class="method m-bank">
+              <input type="radio" name="method" id="mBank" value="bank">
+              <label for="mBank"><i class="fas fa-university"></i> Bank<small>Bank transfer</small></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" id="payPhoneWrap">
+          <label for="dPayPhone">Mobile money number to pay from</label>
+          <input type="tel" id="dPayPhone" placeholder="07xx xxx xxx">
+          <span class="note">A prompt will appear on this phone asking you to enter your PIN.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="giveBtn" style="width:100%"><i class="fas fa-heart"></i> Give now</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- Waiting for PIN approval modal -->
+<div class="modal-bg" id="waitModal" role="dialog" aria-modal="true" aria-labelledby="wtTitle">
+  <div class="modal" style="text-align:center">
+    <h3 id="wtTitle">Approve on your phone</h3>
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="wtMsg">A payment prompt has been sent to <strong id="wtPhone"></strong>. Enter your Mobile Money PIN to approve <strong id="wtAmt"></strong>.</p>
+    <p class="note">Do not close this page. This usually takes under a minute.</p>
+    <div class="modal-actions" style="justify-content:center">
+      <button type="button" class="btn btn-outline-dark" id="wtCancel">Stop waiting</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual payment / bank modal -->
+<div class="modal-bg" id="payModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+  <div class="modal">
+    <h3 id="pmTitle">Complete your gift</h3>
+    <div id="pmBody"></div>
+    <div class="field" style="margin-top:.8rem">
+      <label for="pmRef">Transaction ID / reference (from your payment SMS)</label>
+      <input type="text" id="pmRef" maxlength="60" placeholder="e.g. 1234567890">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-whatsapp" id="pmDone"><i class="fab fa-whatsapp"></i> I have paid — send receipt</button>
+      <button type="button" class="btn btn-outline-dark" id="pmCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt modal -->
+<div class="modal-bg" id="rcModal" role="dialog" aria-modal="true" aria-labelledby="rcTitle">
+  <div class="modal">
+    <h3 id="rcTitle">Thank you for giving 🙏</h3>
+    <div class="pay-box" id="rcBody"></div>
+    <p class="note" id="rcNote"></p>
+    <div class="modal-actions">
+      <a class="btn btn-whatsapp" id="rcWa" href="#" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Send receipt on WhatsApp</a>
+      <button type="button" class="btn btn-outline-dark" id="rcClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom" style="margin-top:0;border:0">
+      <span>© 2026 Lugoba Miracle Center &amp; Church Foundation Limited</span>
+      <span>Registered Organisation · Uganda</span>
+    </div>
+  </div>
+</footer>
+<a class="wa-float" href="https://wa.me/256704476063" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+(function () {
+  var CFG = window.LMCC_CONFIG || {};
+  var D = CFG.donations || {};
+  var WA = CFG.whatsappNumber || '256704476063';
+  var CUR = D.currency || 'UGX';
+  var MIN = D.minAmount || 1000;
+  var API = (D.relworxApiBase || '').replace(/\/+$/, '');
+
+  var $ = function (id) { return document.getElementById(id); };
+  function toast(m, t) { if (window.LMCC && LMCC.toast) LMCC.toast(m, t || 'info'); else alert(m); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmt(n) { return CUR + ' ' + Number(n).toLocaleString('en-UG'); }
+
+  // 07xxxxxxxx / +2567xxxxxxxx / 2567xxxxxxxx -> 2567xxxxxxxx (or '' if invalid)
+  function normPhone(v) {
+    var d = String(v || '').replace(/[^\d]/g, '');
+    if (/^07\d{8}$/.test(d)) return '256' + d.slice(1);
+    if (/^2567\d{8}$/.test(d)) return d;
+    if (/^7\d{8}$/.test(d)) return '256' + d;
+    return '';
+  }
+  function methodLabel(m) { return m === 'mtn' ? 'MTN Mobile Money' : m === 'airtel' ? 'Airtel Money' : 'Bank transfer'; }
+  function receiptNo() { return 'LMCC-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase(); }
+
+  var pending = null; // donation being processed
+
+  // ── presets ──
+  var amt = $('dAmount');
+  document.querySelectorAll('#presets button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      amt.value = b.getAttribute('data-v');
+      document.querySelectorAll('#presets button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    });
+  });
+  amt.addEventListener('input', function () {
+    document.querySelectorAll('#presets button').forEach(function (x) { x.classList.remove('active'); });
+  });
+
+  // ── method toggle ──
+  function currentMethod() { return document.querySelector('input[name="method"]:checked').value; }
+  function syncMethod() { $('payPhoneWrap').style.display = currentMethod() === 'bank' ? 'none' : ''; }
+  document.querySelectorAll('input[name="method"]').forEach(function (r) { r.addEventListener('change', syncMethod); });
+  syncMethod();
+  $('dPhone').addEventListener('change', function () { if (!$('dPayPhone').value) $('dPayPhone').value = $('dPhone').value; });
+
+  // ── save donation ──
+  async function save(d) {
+    try {
+      if (!window.firebase || !firebase.apps || !firebase.apps.length) return false;
+      await firebase.firestore().collection('donations').add({
+        receiptNo: d.receiptNo, name: d.name, phone: d.phone, email: d.email || '',
+        purpose: d.purpose, amount: d.amount, currency: CUR, method: d.method,
+        payFrom: d.payFrom || '', reference: d.reference || '', status: d.status,
+        at: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return true;
+    } catch (e) { console.error('Could not save donation', e); return false; }
+  }
+
+  function waText(d) {
+    return 'DONATION RECEIPT — Lugoba Miracle Center Church\n' +
+      'Receipt No: ' + d.receiptNo + '\n' +
+      'Name: ' + d.name + '\n' +
+      'Phone: ' + d.phone + '\n' +
+      'Giving towards: ' + d.purpose + '\n' +
+      'Amount: ' + fmt(d.amount) + '\n' +
+      'Method: ' + methodLabel(d.method) + '\n' +
+      (d.reference ? 'Transaction ref: ' + d.reference + '\n' : '') +
+      'Status: ' + (d.status === 'paid' ? 'Paid (confirmed by payment provider)' : 'Pending church confirmation') + '\n' +
+      'Date: ' + new Date().toLocaleString('en-UG');
+  }
+  function waUrl(d) { return 'https://wa.me/' + WA + '?text=' + encodeURIComponent(waText(d)); }
+
+  function showReceipt(d) {
+    $('rcBody').innerHTML =
+      '<div class="row"><span>Receipt No</span><strong>' + esc(d.receiptNo) + '</strong></div>' +
+      '<div class="row"><span>Name</span><strong>' + esc(d.name) + '</strong></div>' +
+      '<div class="row"><span>Towards</span><strong>' + esc(d.purpose) + '</strong></div>' +
+      '<div class="row"><span>Amount</span><strong>' + esc(fmt(d.amount)) + '</strong></div>' +
+      '<div class="row"><span>Method</span><strong>' + esc(methodLabel(d.method)) + '</strong></div>' +
+      '<div class="row"><span>Status</span><strong>' + (d.status === 'paid' ? 'Paid' : 'Pending confirmation') + '</strong></div>';
+    $('rcNote').textContent = d.status === 'paid'
+      ? 'Tap the button to send your receipt to the church on WhatsApp.'
+      : 'The church will confirm your payment. Tap the button to send your receipt on WhatsApp.';
+    $('rcWa').href = waUrl(d);
+    $('rcModal').classList.add('show');
+  }
+
+  function row(label, value, copy) {
+    return '<div class="row"><span>' + esc(label) + '</span><strong>' + esc(value) +
+      (copy ? '<button type="button" class="copy-btn" data-copy="' + esc(copy) + '">Copy</button>' : '') + '</strong></div>';
+  }
+
+  function openManual(d) {
+    pending = d;
+    var html = '';
+    if (d.method === 'bank') {
+      var b = D.bank || {};
+      $('pmTitle').textContent = 'Pay by bank transfer';
+      html += '<p>Please deposit or transfer <strong>' + esc(fmt(d.amount)) + '</strong> to:</p><div class="pay-box">' +
+        row('Bank', b.bankName) + row('Account name', b.accountName) +
+        row('Account number', b.accountNumber, b.accountNumber) + (b.branch ? row('Branch', b.branch) : '') +
+        row('Reference', d.receiptNo, d.receiptNo) + '</div>';
+      if (/^ADD /.test(b.bankName || '') || /^ADD /.test(b.accountNumber || '')) {
+        html += '<div class="warn">Bank details have not been set yet. Please contact the church on WhatsApp before paying.</div>';
+      }
+    } else {
+      var num = d.method === 'mtn' ? D.mtnNumber : D.airtelNumber;
+      $('pmTitle').textContent = 'Pay with ' + methodLabel(d.method);
+      var dial = d.method === 'mtn' ? '*165#' : '*185#';
+      html += '<p>Send <strong>' + esc(fmt(d.amount)) + '</strong> by ' + esc(methodLabel(d.method)) + ' to:</p><div class="pay-box">' +
+        row('Number', num, num) + row('Amount', String(d.amount), String(d.amount)) +
+        row('Name', D.accountName || 'Lugoba Miracle Center') + row('Reference', d.receiptNo, d.receiptNo) + '</div>' +
+        '<p><a class="btn btn-primary" style="display:block;text-align:center" href="tel:' + encodeURIComponent(dial) + '"><i class="fas fa-phone"></i> Open ' + esc(dial) + ' on this phone</a></p>' +
+        '<p class="note">On a phone: tap the button, choose <strong>Send Money</strong>, enter the number and amount above, then your PIN. ' +
+        'On a computer: dial <strong>' + esc(dial) + '</strong> on your phone. After the confirmation SMS arrives, paste the transaction ID below.</p>';
+    }
+    $('pmBody').innerHTML = html;
+    $('pmRef').value = '';
+    $('payModal').classList.add('show');
+  }
+
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('.copy-btn');
+    if (!c) return;
+    var v = c.getAttribute('data-copy');
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(function () { c.textContent = 'Copied'; setTimeout(function () { c.textContent = 'Copy'; }, 1500); });
+  });
+
+  $('pmCancel').addEventListener('click', function () { $('payModal').classList.remove('show'); pending = null; });
+  $('rcClose').addEventListener('click', function () { $('rcModal').classList.remove('show'); });
+
+  $('pmDone').addEventListener('click', async function () {
+    if (!pending) return;
+    var d = pending;
+    d.reference = $('pmRef').value.trim();
+    if (d.method !== 'bank' && !d.reference) { toast('Please enter the transaction ID from your SMS.', 'warning'); return; }
+    d.status = 'pending';
+    $('pmDone').disabled = true;
+    await save(d);
+    $('pmDone').disabled = false;
+    $('payModal').classList.remove('show');
+    showReceipt(d);
+    window.open(waUrl(d), '_blank', 'noopener');
+    $('giveForm').reset(); syncMethod();
+    pending = null;
+  });
+
+  // ── automatic PIN prompt via Relworx (through the secure Cloud Function) ──
+  var pollTimer = null, pollStop = false;
+
+  function post(path, body) {
+    return fetch(API + '/' + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.');
+        return j;
+      });
+    });
+  }
+
+  function endWaiting() {
+    pollStop = true; clearTimeout(pollTimer);
+    $('waitModal').classList.remove('show');
+    $('giveBtn').disabled = false;
+  }
+  $('wtCancel').addEventListener('click', function () {
+    endWaiting();
+    toast('If you already approved the payment, the church will see it. You can also send a receipt on WhatsApp.', 'info');
+  });
+
+  function poll(receiptNo, d, tries) {
+    if (pollStop) return;
+    if (tries > 30) { // ~2 minutes
+      endWaiting();
+      toast('We have not received confirmation yet. If money left your phone, send your receipt to the church on WhatsApp.', 'warning');
+      return;
+    }
+    post('relworxCheckStatus', { receiptNo: receiptNo }).then(function (r) {
+      if (pollStop) return;
+      if (r.status === 'paid') {
+        endWaiting();
+        d.status = 'paid'; d.reference = r.reference || ''; d.receiptNo = r.receiptNo;
+        showReceipt(d);
+        $('giveForm').reset(); syncMethod();
+      } else if (r.status === 'failed' || r.status === 'review') {
+        endWaiting();
+        toast(r.status === 'failed' ? 'The payment was not completed. You have not been charged.' : 'Payment needs review by the church. Please contact us on WhatsApp.', 'warning');
+      } else {
+        pollTimer = setTimeout(function () { poll(receiptNo, d, tries + 1); }, 4000);
+      }
+    }).catch(function () {
+      pollTimer = setTimeout(function () { poll(receiptNo, d, tries + 1); }, 4000);
+    });
+  }
+
+  async function payWithPrompt(d) {
+    $('giveBtn').disabled = true;
+    try {
+      var r = await post('relworxRequestPayment', {
+        name: d.name, phone: d.phone, email: d.email, purpose: d.purpose,
+        amount: d.amount, method: d.method, payFrom: d.payFrom
+      });
+      d.receiptNo = r.receiptNo;
+      $('wtPhone').textContent = d.payFrom;
+      $('wtAmt').textContent = fmt(d.amount);
+      $('waitModal').classList.add('show');
+      pollStop = false;
+      pollTimer = setTimeout(function () { poll(r.receiptNo, d, 0); }, 4000);
+    } catch (err) {
+      $('giveBtn').disabled = false;
+      toast(err.message, 'error');
+    }
+  }
+
+  // ── submit ──
+  $('giveForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var method = currentMethod();
+    var name = $('dName').value.trim();
+    var phone = normPhone($('dPhone').value);
+    var amount = Math.round(Number($('dAmount').value));
+    var payFrom = method === 'bank' ? '' : normPhone($('dPayPhone').value || $('dPhone').value);
+
+    if (!name) return toast('Please enter your full name.', 'warning');
+    if (!phone) return toast('Please enter a valid Ugandan phone number (e.g. 0771234567).', 'warning');
+    if (!amount || amount < MIN) return toast('The minimum donation is ' + fmt(MIN) + '.', 'warning');
+    if (method !== 'bank' && !payFrom) return toast('Please enter a valid mobile money number.', 'warning');
+
+    var d = {
+      receiptNo: receiptNo(), name: name, phone: '+' + phone, email: $('dEmail').value.trim(),
+      purpose: $('dPurpose').value, amount: amount, method: method,
+      payFrom: payFrom ? '+' + payFrom : '', status: 'pending', reference: ''
+    };
+
+    if (method !== 'bank' && API) {
+      await payWithPrompt(d);
+    } else {
+      openManual(d);
+    }
+  });
+})();
+</script>
+</body>
+</html>
