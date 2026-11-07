@@ -1,116 +1,59 @@
-/**
- * Mobile menu — open/close + reliable page redirects on all phones.
- */
+/* js/menu.js: one menu script for every page.
+   Works with <div id="mobileMenu" class="mobile-menu"> (new markup)
+   and with <nav class="nav" id="nav"> (old markup). */
 (function () {
-  function ready(fn) {
-    if (document.readyState !== 'loading') fn();
-    else document.addEventListener('DOMContentLoaded', fn);
-  }
+  if (window.__lmccMenuReady) return;   // never attach twice
+  window.__lmccMenuReady = true;
 
-  ready(function () {
-    var btn = document.getElementById('menuToggle') || document.querySelector('.menu-toggle');
-    var nav = document.getElementById('nav');
-    var backdrop = document.getElementById('navBackdrop');
-    if (!btn || !nav) {
-      console.warn('Menu: button or nav missing');
-      return;
-    }
-    if (btn.getAttribute('data-menu-bound') === '1') return;
-    btn.setAttribute('data-menu-bound', '1');
+  function init() {
+    var btn = document.getElementById('menuToggle');
+    var menu = document.getElementById('mobileMenu') ||
+               document.getElementById('nav') ||
+               document.querySelector('.site-header .nav');
+    if (!btn || !menu) return;
 
-    function headerOffset() {
-      var top = 0;
-      var topbar = document.querySelector('.topbar');
-      var header = document.querySelector('.site-header');
-      if (topbar) top += topbar.offsetHeight;
-      if (header) top += header.offsetHeight;
-      return top || 72;
-    }
+    var backdrop = document.querySelector('.nav-backdrop');
+    if (menu.id) btn.setAttribute('aria-controls', menu.id);
 
-    function positionNav() {
-      var y = headerOffset();
-      nav.style.top = y + 'px';
-      if (backdrop) backdrop.style.top = y + 'px';
-    }
+    function isOpen() { return menu.classList.contains('open'); }
 
-    function openMenu() {
-      positionNav();
-      nav.classList.add('open');
-      btn.setAttribute('aria-expanded', 'true');
-      btn.setAttribute('aria-label', 'Close menu');
-      if (backdrop) {
-        backdrop.hidden = false;
-        backdrop.classList.add('show');
-      }
-      document.body.classList.add('menu-open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeMenu() {
-      nav.classList.remove('open');
-      btn.setAttribute('aria-expanded', 'false');
-      btn.setAttribute('aria-label', 'Open menu');
-      if (backdrop) {
-        backdrop.classList.remove('show');
-        backdrop.hidden = true;
-      }
-      document.body.classList.remove('menu-open');
-      document.body.style.overflow = '';
+    function setOpen(open) {
+      menu.classList.toggle('open', open);
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      document.body.classList.toggle('menu-open', open);
+      if (backdrop) backdrop.classList.toggle('show', open);
     }
 
     btn.addEventListener('click', function (e) {
-      e.preventDefault();
       e.stopPropagation();
-      if (nav.classList.contains('open')) closeMenu();
-      else openMenu();
+      setOpen(!isOpen());
     });
 
-    function goTo(href) {
-      if (!href) return;
-      closeMenu();
-      // Force navigation (fixes mobile browsers that cancel <a> clicks when menu closes)
-      setTimeout(function () {
-        window.location.href = href;
-      }, 10);
-    }
+    menu.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setOpen(false);
+    });
 
-    // Capture phase so we win over other handlers
-    nav.addEventListener(
-      'click',
-      function (e) {
-        var t = e.target;
-        while (t && t !== nav && t.tagName !== 'A') t = t.parentNode;
-        if (!t || t.tagName !== 'A') return;
-        var href = t.getAttribute('href');
-        if (!href || href === '#') {
-          closeMenu();
-          return;
-        }
-        if (/^(https?:|mailto:|tel:)/i.test(href)) {
-          closeMenu();
-          return; // external — default behaviour
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        goTo(href);
-      },
-      true
-    );
+    if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
 
-    if (backdrop) {
-      backdrop.addEventListener('click', function (e) {
-        e.preventDefault();
-        closeMenu();
-      });
-    }
-
-    window.addEventListener('resize', function () {
-      if (window.innerWidth > 1024) closeMenu();
-      else if (nav.classList.contains('open')) positionNav();
+    // Tap anywhere outside the menu to close it
+    document.addEventListener('click', function (e) {
+      if (isOpen() && !menu.contains(e.target) && !btn.contains(e.target)) setOpen(false);
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeMenu();
+      if (e.key === 'Escape' && isOpen()) { setOpen(false); btn.focus(); }
     });
-  });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 1024 && isOpen()) setOpen(false);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
