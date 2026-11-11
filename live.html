@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Stream | Lugoba Miracle Center Church</title>
+  <meta name="theme-color" content="#1b5a39">
+  <link rel="stylesheet" href="css/miracle-theme.css">
+  <style>
+    .live-layout {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 1.4rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .live-layout { grid-template-columns: 1fr; }
+    }
+    .live-player-wrap {
+      background: #0a0a0a;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 3px solid var(--gold-500);
+      aspect-ratio: 16/9;
+      position: relative;
+    }
+    .live-player-wrap iframe,
+    .live-player-wrap video {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000;
+      object-fit: contain;
+    }
+    .live-badge {
+      position: absolute; top: 12px; left: 12px; z-index: 2;
+      background: #e11d48; color: #fff; font-weight: 800; font-size: .72rem;
+      letter-spacing: .12em; padding: .35rem .7rem; border-radius: 999px;
+      display: none; align-items: center; gap: .35rem;
+    }
+    .live-badge.on { display: inline-flex; }
+    /* The player host must fill the 16:9 box, otherwise iframes collapse to 150px tall */
+    #playerHost { position: absolute; inset: 0; }
+    .unmute-btn {
+      position: absolute; right: 12px; bottom: 58px; z-index: 3;
+      background: rgba(0,0,0,.75); color: #fff; border: 1.5px solid var(--gold-500);
+      border-radius: 999px; padding: .55rem 1rem; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .unmute-btn[hidden] { display: none; }
+    .live-badge i { font-size: .55rem; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .live-chat {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border-top: 4px solid var(--gold-500);
+      display: flex; flex-direction: column;
+      min-height: 420px; max-height: 560px;
+    }
+    .live-chat-head {
+      padding: 1rem 1.1rem; border-bottom: 1px solid var(--beige-200);
+      font-weight: 700; color: var(--green-900);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .live-chat-body {
+      flex: 1; overflow-y: auto; padding: 1rem;
+      background: var(--beige-50);
+    }
+    .chat-line {
+      background: #fff; border-radius: 12px; padding: .65rem .85rem;
+      margin-bottom: .55rem; box-shadow: var(--shadow-sm); font-size: .9rem;
+    }
+    .chat-line .who { font-weight: 700; color: var(--green-700); font-size: .8rem; }
+    .chat-line .when { color: var(--ink-soft); font-size: .72rem; margin-left: .4rem; }
+    .live-chat-form {
+      display: flex; gap: .5rem; padding: .8rem;
+      border-top: 1px solid var(--beige-200);
+    }
+    .live-chat-form input {
+      flex: 1; border: 1.5px solid var(--beige-200); border-radius: 999px;
+      padding: .65rem 1rem; font: inherit;
+    }
+    .live-chat-form button {
+      border: 0; background: var(--green-700); color: #fff;
+      border-radius: 999px; padding: 0 1.1rem; font-weight: 700; cursor: pointer;
+    }
+    .gate-card { max-width: 480px; margin: 2rem auto; text-align: center; }
+    .offline-box {
+      display: grid; place-items: center; height: 100%; color: #ddd; text-align: center; padding: 2rem;
+      background: linear-gradient(160deg, #0e2f1e, #14432b);
+    }
+    .offline-box img {
+      width: min(100%, 420px); border-radius: 12px; margin-bottom: 1rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+    .rec-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem; margin-top: 1rem;
+    }
+    .rec-card video, .rec-card iframe {
+      width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 10px; background: #000;
+    }
+    .viewer-count {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: rgba(0,0,0,.65); color: #fff; font-size: .78rem; font-weight: 700;
+      padding: .3rem .65rem; border-radius: 999px; margin-left: .5rem;
+    }
+    .live-give-bar {
+      margin-top: 1rem; padding: 1rem 1.1rem; background: linear-gradient(135deg,#1b5a39,#14432b);
+      border-radius: var(--radius-lg); color: #fff; display: flex; flex-wrap: wrap; gap: .8rem; align-items: center;
+      box-shadow: var(--shadow-md);
+    }
+    .live-give-bar .goal-wrap { flex: 1; min-width: 180px; }
+    .live-give-bar .goal-label { font-size: .8rem; opacity: .9; margin-bottom: .25rem; }
+    .live-give-bar .goal-track { height: 10px; background: rgba(255,255,255,.2); border-radius: 999px; overflow: hidden; }
+    .live-give-bar .goal-fill { height: 100%; background: linear-gradient(90deg,#c9a24b,#f0d78c); border-radius: 999px; transition: width .6s ease; width: 0; }
+    .live-give-bar .goal-amt { font-size: .85rem; font-weight: 700; margin-top: .3rem; }
+    .quick-amounts { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .quick-amounts button {
+      border: 1.5px solid rgba(255,255,255,.45); background: rgba(255,255,255,.12); color: #fff;
+      border-radius: 999px; padding: .45rem .85rem; font-weight: 700; cursor: pointer; font-size: .85rem;
+    }
+    .quick-amounts button:hover { background: rgba(255,255,255,.25); }
+    .gift-toast-layer {
+      position: fixed; left: 16px; bottom: 16px; z-index: 9999; display: flex; flex-direction: column; gap: .5rem;
+      pointer-events: none; max-width: min(340px, calc(100vw - 32px));
+    }
+    .gift-toast {
+      background: #fff; border-left: 4px solid #c9a24b; border-radius: 12px; padding: .7rem .9rem;
+      box-shadow: 0 8px 28px rgba(0,0,0,.18); animation: giftIn .45s ease, giftOut .4s ease 4.2s forwards;
+      font-size: .9rem;
+    }
+    .gift-toast strong { color: #1b5a39; }
+    @keyframes giftIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @keyframes giftOut { to { opacity: 0; transform: translateY(8px); } }
+    .donor-ticker {
+      margin-top: .8rem; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+    }
+    .donor-ticker-inner { display: inline-block; animation: ticker 28s linear infinite; font-size: .85rem; color: var(--ink-soft); }
+    .donor-ticker-inner span { margin-right: 1.8rem; }
+    .donor-ticker-inner b { color: var(--green-700); }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  </style>
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+</head>
+<body>
+<div class="topbar">
+  <div class="container">
+    <span class="license">Live Stream · Approved members only</span>
+    <span>
+      <a href="login.html" class="auth-guest">LOGIN</a>
+      <span class="auth-guest"> · </span>
+      <a href="create-account.html" class="auth-guest">Create account</a>
+      <span class="auth-user hidden"><span class="auth-status"><span class="avatar auth-avatar">M</span> <span class="auth-display-name">Member</span></span></span>
+    </span>
+  </div>
+</div>
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <img src="lugoba-logo.jpeg" alt="Lugoba Miracle Center Church logo" width="52" height="52">
+      <span class="brand-text">
+        <span class="brand-name">Lugoba Miracle Center</span>
+        <span class="brand-tag">A Place of Love and Holiness</span>
+      </span>
+    </a>
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <nav class="nav" id="nav">
+      <a href="index.html">HOME</a>
+      <a href="about.html">ABOUT</a>
+      <a href="other-services.html">SERVICES</a>
+      <a href="live.html" aria-current="page">LIVE</a>
+      <a href="gallery.html">GALLERY</a>
+      <a href="donate.html">GIVE</a>
+      <a href="newsletter.html">NEWSLETTER</a>
+      <a href="admin.html" class="auth-admin hidden">ADMIN</a>
+      <a class="btn btn-primary" href="create-account.html">JOIN FELLOWSHIP</a>
+    </nav>
+  </div>
+</header>
+<div class="nav-backdrop" id="navBackdrop" hidden></div>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Live Stream</h1>
+    <p>Watch the church live on our own platform. Approved members can join, comment, and invite others with a link.</p>
+  </div>
+</section>
+
+<main class="section">
+  <div class="container">
+    <!-- Auth / approval gate -->
+    <div id="liveGate" class="form-card gate-card">
+      <h2>Members only</h2>
+      <p class="sub">Sign in with an account approved by the church admin to watch and comment on the live stream.</p>
+      <div id="gateMsg"></div>
+      <div class="form-actions">
+        <a class="btn btn-primary" href="login.html">Sign in</a>
+        <a class="btn btn-outline-dark" href="create-account.html">Create account</a>
+      </div>
+    </div>
+
+    <!-- Player + chat (shown when approved) -->
+    <div id="liveApp" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem">
+        <div>
+          <h2 id="liveTitle" style="margin:0">Live Service</h2>
+          <p id="liveDesc" style="margin:.35rem 0 0;color:var(--ink-soft)"></p>
+        </div>
+        <span id="liveStatusLabel" class="badge badge-pending">Checking…</span>
+      </div>
+
+      <div id="liveInviteBar" class="hidden" style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1.2rem;padding:.85rem 1rem;background:var(--beige-50);border-radius:12px;border:1px solid var(--beige-200)">
+        <strong style="font-size:.9rem;color:var(--green-900)"><i class="fas fa-share-alt"></i> Invite others</strong>
+        <input type="text" id="memberLiveLink" readonly style="flex:1;min-width:180px;padding:.5rem .75rem;border:1.5px solid var(--beige-200);border-radius:8px;font-size:.85rem;background:#fff">
+        <button type="button" class="btn btn-primary btn-sm" id="btnMemberCopyLink"><i class="fas fa-copy"></i> Copy</button>
+        <a class="btn btn-green btn-sm" id="btnMemberShareWa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a class="btn btn-outline-dark btn-sm" id="btnMemberShareFb" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>
+      </div>
+
+      <div class="live-layout">
+        <div>
+          <div class="live-player-wrap">
+            <span class="live-badge" id="liveBadge"><i class="fas fa-circle"></i> LIVE</span>
+            <div id="playerHost">
+              <div class="offline-box">
+                <img src="images/worship-celebration.jpg" alt="Church">
+                <p><strong>Stream offline</strong><br>When the church goes live, the broadcast will appear here in HD.</p>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:.85rem;color:var(--ink-soft);margin-top:.8rem">
+            Streaming on the church website platform. Use headphones and a stable connection for the best experience. The video starts muted (browser rule): tap &ldquo;Tap to unmute&rdquo; or the speaker icon to hear it.
+            <span id="viewerCountWrap" class="viewer-count" hidden><i class="fas fa-eye"></i> <span id="viewerCountNum">0</span> watching</span>
+          </p>
+
+          <!-- Interactive giving during live -->
+          <div class="live-give-bar" id="liveGiveBar">
+            <div class="goal-wrap">
+              <div class="goal-label"><i class="fas fa-heart"></i> Live giving goal</div>
+              <div class="goal-track"><div class="goal-fill" id="liveGoalFill"></div></div>
+              <div class="goal-amt"><span id="liveGoalRaised">UGX 0</span> of <span id="liveGoalTarget">UGX 500,000</span></div>
+            </div>
+            <div class="quick-amounts" id="quickGive">
+              <button type="button" data-v="5000">5k</button>
+              <button type="button" data-v="10000">10k</button>
+              <button type="button" data-v="20000">20k</button>
+              <button type="button" data-v="50000">50k</button>
+              <a class="btn btn-primary btn-sm" href="donate.html" style="border-radius:999px;padding:.45rem 1rem">Give more</a>
+            </div>
+          </div>
+          <div class="donor-ticker" id="donorTicker" hidden>
+            <div class="donor-ticker-inner" id="donorTickerInner"></div>
+          </div>
+        </div>
+
+        <div class="live-chat">
+          <div class="live-chat-head">
+            <span><i class="fas fa-comments"></i> Live comments</span>
+            <span style="font-size:.78rem;font-weight:500;color:var(--ink-soft)" id="chatMeta">Real-time · Approved members</span>
+          </div>
+          <div class="live-chat-body" id="chatBody">
+            <p style="text-align:center;color:var(--ink-soft);font-size:.9rem">No comments yet. Be the first to greet the church.</p>
+          </div>
+          <form class="live-chat-form" id="chatForm">
+            <input type="text" id="chatInput" maxlength="500" placeholder="Write a comment or prayer…" autocomplete="off">
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Recordings -->
+      <div style="margin-top:2.8rem">
+        <div class="section-head" style="margin-bottom:1rem">
+          <h2>Recordings</h2>
+          <div class="divider"></div>
+          <p>Past services saved by admin (and members where allowed).</p>
+        </div>
+        <div class="rec-grid" id="recordingsGrid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom" style="margin-top:0;border:0">
+      <span>© 2026 Lugoba Miracle Center Church</span>
+    </div>
+  </div>
+</footer>
+<a class="wa-float" href="https://wa.me/256704476063" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+(function () {
+  var gate = document.getElementById('liveGate');
+  var app = document.getElementById('liveApp');
+  var entered = false;            // enterLive must only ever run once
+  var unsubComments = null, unsubStream = null;
+  var lastSig = null;             // what the player is currently showing
+  var isAdminView = false;
+  var lastLive = null, lastHbKey = null, lastHbSeen = Date.now(), heartbeatStale = false, staleTimer = null;
+  var HEARTBEAT_STALE_MS = 90000; // broadcaster beats every 20s
+  var esc = function (v) { return LMCC.esc(v); };
+
+  function youtubeEmbed(url) {
+    if (!url) return '';
+    if (url.indexOf('youtube.com/embed/') !== -1) {
+      return url + (url.indexOf('?') === -1 ? '?' : '&') + (url.indexOf('autoplay=') === -1 ? 'autoplay=1&mute=1&playsinline=1&rel=0' : '');
+    }
+    var m = url.match(/(?:youtu\.be\/|v=|\/live\/|\/embed\/)([A-Za-z0-9_-]{6,})/);
+    if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&mute=1&playsinline=1&rel=0';
+    return url;
+  }
+
+  var IFRAME_ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+
+  function iframe(src) {
+    return '<iframe src="' + esc(src) + '" allow="' + IFRAME_ALLOW + '" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Live stream"></iframe>';
+  }
+
+  /** Works out what the player SHOULD show. Returns {sig, html, badge, label, labelClass, nativeSession}. */
+  function plan(live) {
+    live = live || {};
+    var thumb = live.thumbnailUrl || 'images/worship-celebration.jpg';
+    var offline = {
+      sig: 'offline|' + thumb,
+      badge: false, label: 'Offline', labelClass: 'badge badge-pending',
+      nativeSession: null,
+      html: '<div class="offline-box"><img src="' + esc(thumb) + '" alt=""><p><strong>Stream offline</strong><br>When the church goes live on the website, the broadcast will appear here in HD.</p></div>'
+    };
+    if (live.active === false) return offline;
+    // Native stream whose broadcaster stopped sending heartbeats (tab closed / lost internet)
+    if (live.active && (live.mode === 'native' || live.provider === 'native') && heartbeatStale) return offline;
+
+    // Website-native live (independent of YouTube)
+    if (live.active && (live.mode === 'native' || live.provider === 'native') && live.sessionId) {
+      return {
+        sig: 'native|' + live.sessionId,
+        badge: true,
+        label: 'LIVE ON WEBSITE',
+        labelClass: 'badge badge-approved',
+        nativeSession: live.sessionId,
+        html: '<div class="offline-box" id="nativeConnecting"><p><strong>Connecting to live stream…</strong><br>Please wait a moment.</p></div><video id="nativeLiveVideo" playsinline autoplay muted controls style="width:100%;height:100%;background:#000;display:none"></video><button type="button" class="unmute-btn" id="btnUnmute" hidden>&#128266; Tap to unmute</button>'
+      };
+    }
+
+    var channelEmbed = '';
+    if (live.youtubeChannelId) channelEmbed = LMCC.youtubeChannelLiveEmbed(live.youtubeChannelId);
+    else if (live.embedUrl && live.embedUrl.indexOf('live_stream?channel=') !== -1) channelEmbed = live.embedUrl;
+
+    if (channelEmbed && live.active !== false) {
+      return {
+        sig: 'channel|' + channelEmbed,
+        badge: false, label: 'YOUTUBE · AUTO', labelClass: 'badge badge-approved',
+        nativeSession: null,
+        html: iframe(channelEmbed)
+      };
+    }
+    var src = live.embedUrl || live.streamUrl;
+    if (!src) return offline;
+    var provider = live.provider || 'youtube';
+    var html;
+    if (provider === 'hls' || /\.m3u8(\?|$)/i.test(src)) {
+      // Scalable CDN-delivered live (Cloudflare Stream, Mux, etc.): thousands of viewers, no load on the church device
+      return {
+        sig: 'hls|' + src, badge: true, label: 'LIVE NOW', labelClass: 'badge badge-approved',
+        nativeSession: null, hls: src,
+        html: '<video id="hlsVideo" playsinline autoplay muted controls style="width:100%;height:100%;background:#000"></video>' +
+              '<div id="hlsMsg" class="offline-box" style="position:absolute;inset:0;pointer-events:none"><p><strong>Connecting to live stream…</strong></p></div>' +
+              '<button type="button" class="unmute-btn" id="btnUnmute">&#128266; Tap to unmute</button>'
+      };
+    }
+    if (provider === 'youtube' || /youtu/.test(src)) html = iframe(youtubeEmbed(src));
+    else if (provider === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(src) || /cloudinary/.test(src))
+      html = '<video src="' + esc(LMCC.playableVideoUrl(src)) + '" controls autoplay muted playsinline poster="' + esc(thumb) + '"></video>';
+    else html = iframe(src);
+    return { sig: 'manual|' + src + '|' + provider, badge: true, label: 'LIVE NOW', labelClass: 'badge badge-approved', nativeSession: null, html: html };
+  }
+
+  var nativePc = null;
+  var nativeUnsubs = [];
+  var nativeRetry = 0, nativeRetryTimer = null, nativeWatchdog = null;
+  var nativeViewerRef = null, nativeSession = null;
+  var MAX_RETRIES = 5;
+
+  function cleanupNative() {
+    clearTimeout(nativeRetryTimer);
+    clearTimeout(nativeWatchdog);
+    nativeUnsubs.forEach(function (u) { try { u(); } catch (e) {} });
+    nativeUnsubs = [];
+    if (nativePc) {
+      var old = nativePc;
+      nativePc = null;                 // so late events from the old connection are ignored
+      try { old.close(); } catch (e) {}
+    }
+  }
+
+  /** Tell the broadcaster we left (best effort) so it can free the connection. */
+  function leaveNative() {
+    cleanupNative();
+    if (nativeViewerRef) {
+      try { nativeViewerRef.delete().catch(function () {}); } catch (e) {}
+      nativeViewerRef = null;
+    }
+    nativeSession = null;
+    nativeRetry = 0;
+  }
+  window.addEventListener('pagehide', leaveNative);
+
+  function showConnecting(html) {
+    var video = document.getElementById('nativeLiveVideo');
+    var box = document.getElementById('nativeConnecting');
+    var btn = document.getElementById('btnUnmute');
+    if (video) video.style.display = 'none';
+    if (btn) btn.hidden = true;
+    if (box) { box.style.display = ''; box.innerHTML = html; }
+  }
+
+  function retryNative(reason) {
+    if (!nativeSession || lastSig !== 'native|' + nativeSession) return;   // stream no longer showing
+    cleanupNative();
+    nativeRetry++;
+    if (nativeRetry > MAX_RETRIES) {
+      showConnecting('<p><strong>Could not connect to the live stream</strong><br>Please check your internet and refresh the page. If it keeps failing on mobile data, try Wi-Fi.</p>');
+      return;
+    }
+    showConnecting('<p><strong>Reconnecting…</strong><br>Attempt ' + nativeRetry + ' of ' + MAX_RETRIES + '</p>');
+    var sid = nativeSession;
+    nativeRetryTimer = setTimeout(function () { connectNativeViewer(sid); }, 1500 * nativeRetry);
+  }
+
+  async function connectNativeViewer(sessionId) {
+    cleanupNative();
+    nativeSession = sessionId;
+    if (!sessionId || !firebase.auth().currentUser) return;
+    var video = document.getElementById('nativeLiveVideo');
+    if (!video) return;
+
+    var db = firebase.firestore();
+    var uid = firebase.auth().currentUser.uid;
+    var viewerRef = db.collection('live_rooms').doc(sessionId).collection('viewers').doc(uid);
+    nativeViewerRef = viewerRef;
+    // Unique id for THIS connection attempt. Signalling messages from older attempts are ignored.
+    var joinId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    var pc;
+    try {
+      pc = new RTCPeerConnection({ iceServers: LMCC.iceServers() });
+      nativePc = pc;
+      var pending = [];              // ICE candidates that arrived before the answer was applied
+      var remoteReady = false;
+
+      pc.ontrack = function (ev) {
+        if (pc !== nativePc) return;
+        var box = document.getElementById('nativeConnecting');
+        video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+        video.muted = true;          // browsers only allow autoplay when muted
+        video.style.display = 'block';
+        if (box) box.style.display = 'none';
+        var btn = document.getElementById('btnUnmute');
+        if (btn) {
+          btn.hidden = false;
+          btn.onclick = function () { video.muted = false; video.volume = 1; btn.hidden = true; video.play().catch(function () {}); };
+        }
+        video.play().catch(function () {});
+      };
+
+      pc.onicecandidate = function (ev) {
+        if (ev.candidate && pc === nativePc) {
+          var c = ev.candidate;
+          viewerRef.collection('candidates_from_viewer').add({
+            joinId: joinId, candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex
+          }).catch(function () {});
+        }
+      };
+
+      var dropTimer = null;
+      pc.onconnectionstatechange = function () {
+        if (pc !== nativePc) return;
+        var st = pc.connectionState;
+        if (st === 'connected') { nativeRetry = 0; clearTimeout(nativeWatchdog); clearTimeout(dropTimer); }
+        else if (st === 'failed') retryNative('failed');
+        else if (st === 'disconnected') {
+          clearTimeout(dropTimer);
+          dropTimer = setTimeout(function () { if (pc === nativePc && pc.connectionState !== 'connected') retryNative('disconnected'); }, 6000);
+        }
+      };
+
+      // recvonly transceivers so we get remote tracks
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      var offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // set() replaces the whole doc, which also clears any old answer
+      await viewerRef.set({
+        offer: { type: offer.type, sdp: offer.sdp },
+        joinId: joinId,
+        answered: false,
+        displayName: (LMCC.userProfile && LMCC.userProfile() && LMCC.userProfile().displayName) || firebase.auth().currentUser.displayName || 'Member',
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      if (pc !== nativePc) return;
+
+      // If nothing connects within 20s, try again with a fresh attempt
+      nativeWatchdog = setTimeout(function () {
+        if (pc === nativePc && pc.connectionState !== 'connected') retryNative('timeout');
+      }, 20000);
+
+      var gotAnswer = false;
+      nativeUnsubs.push(viewerRef.onSnapshot(async function (snap) {
+        var d = snap.data();
+        if (!d || !d.answer || d.joinId !== joinId || gotAnswer || pc !== nativePc) return;
+        gotAnswer = true;
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(d.answer));
+          remoteReady = true;
+          for (var i = 0; i < pending.length; i++) {
+            try { await pc.addIceCandidate(pending[i]); } catch (e) { console.warn('ICE', e); }
+          }
+          pending = [];
+        } catch (e) { console.warn(e); }
+      }));
+
+      nativeUnsubs.push(viewerRef.collection('candidates_from_broadcaster').onSnapshot(function (snap) {
+        snap.docChanges().forEach(async function (ch) {
+          if (ch.type !== 'added' || pc !== nativePc) return;
+          var d = ch.doc.data();
+          if (d.joinId !== joinId) return;            // leftover from an earlier attempt
+          var cand = { candidate: d.candidate, sdpMid: d.sdpMid, sdpMLineIndex: d.sdpMLineIndex };
+          if (!remoteReady) { pending.push(cand); return; }
+          try { await pc.addIceCandidate(cand); } catch (e) { console.warn('ICE', e); }
+        });
+      }));
+    } catch (err) {
+      console.error('Native connect failed', err);
+      if (pc && pc !== nativePc) return;
+      showConnecting('<p><strong>Could not connect to live stream</strong><br>' + esc(err.message || 'Try refreshing the page.') + '</p>');
+      retryNative('error');
+    }
+  }
+
+  function setupInviteBar(live) {
+    var bar = document.getElementById('liveInviteBar');
+    if (!bar) return;
+    var show = !!(live && live.active);
+    bar.classList.toggle('hidden', !show);
+    if (!show) return;
+    var path = window.location.pathname.replace(/\/live\.html.*/i, '/');
+    var inviteUrl = (window.location.origin || '') + path + 'live.html';
+    if (!window.location.origin || window.location.protocol === 'file:') inviteUrl = window.location.href.split('#')[0];
+    var inp = document.getElementById('memberLiveLink');
+    if (inp) inp.value = inviteUrl;
+    var wa = document.getElementById('btnMemberShareWa');
+    if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent('Join the live stream at Lugoba Miracle Center Church: ' + inviteUrl);
+    var fb = document.getElementById('btnMemberShareFb');
+    if (fb) fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(inviteUrl);
+  }
+
+  var copyBtn = document.getElementById('btnMemberCopyLink');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var inp = document.getElementById('memberLiveLink');
+      if (!inp || !inp.value) return;
+      navigator.clipboard.writeText(inp.value).then(function () {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function () { copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 1800);
+      }).catch(function () {
+        inp.select();
+        document.execCommand('copy');
+      });
+    });
+  }
+
+  var hlsInst = null, hlsRetry = null;
+  function destroyHls() {
+    clearTimeout(hlsRetry);
+    if (hlsInst) { try { hlsInst.destroy(); } catch (e) {} hlsInst = null; }
+  }
+  function attachHls(src) {
+    destroyHls();
+    var video = document.getElementById('hlsVideo');
+    var msg = document.getElementById('hlsMsg');
+    var btn = document.getElementById('btnUnmute');
+    if (!video) return;
+    function hideMsg() { if (msg) msg.style.display = 'none'; }
+    function showMsg(t) { if (msg) { msg.style.display = ''; msg.innerHTML = '<p><strong>' + t + '</strong></p>'; } }
+    if (btn) btn.onclick = function () { video.muted = false; video.volume = 1; btn.hidden = true; video.play().catch(function () {}); };
+    video.addEventListener('playing', hideMsg);
+    if (window.Hls && Hls.isSupported()) {
+      var h = hlsInst = new Hls({ lowLatencyMode: true, liveSyncDurationCount: 3 });
+      h.on(Hls.Events.MANIFEST_PARSED, function () { video.play().catch(function () {}); });
+      h.on(Hls.Events.ERROR, function (ev, data) {
+        if (!data.fatal || h !== hlsInst) return;
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { h.recoverMediaError(); return; }
+        // Network error (also happens before the broadcast starts): keep trying quietly
+        showMsg('Waiting for the live stream to start…');
+        clearTimeout(hlsRetry);
+        hlsRetry = setTimeout(function () { if (h === hlsInst) { h.loadSource(src); h.startLoad(); } }, 5000);
+      });
+      h.loadSource(src);
+      h.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;                       // Safari / iPhone play HLS natively
+      video.play().catch(function () {});
+    } else {
+      showMsg('This browser cannot play the live stream. Please update it.');
+    }
+  }
+
+  function renderPlayer(live) {
+    lastLive = live;
+    // Staleness is measured with THIS device's clock only (never compared to the server time),
+    // so a wrong phone clock cannot make a healthy stream look dead.
+    var hbKey = live && live.heartbeatAt && live.heartbeatAt.seconds != null ? live.heartbeatAt.seconds + ':' + live.heartbeatAt.nanoseconds : null;
+    if (hbKey && hbKey !== lastHbKey) { lastHbKey = hbKey; lastHbSeen = Date.now(); }
+    heartbeatStale = !!(hbKey && Date.now() - lastHbSeen > HEARTBEAT_STALE_MS);
+    document.getElementById('liveTitle').textContent = (live && live.title) || 'Live Service';
+    var desc = '';
+    if (live && live.description) desc = live.description;
+    else if (live && live.mode === 'native') desc = 'Streaming live on the church website. Invite others with the link below.';
+    else if (live && live.youtubeChannelId) desc = 'Connected to the church YouTube channel. When the church goes live on YouTube, it appears here. Tap the speaker icon on the video to unmute.';
+    document.getElementById('liveDesc').textContent = desc;
+
+    setupInviteBar(live);
+
+    var p = plan(live);
+    if (p.sig === lastSig) return;
+    // Leaving native → cleanup
+    if (lastSig && lastSig.indexOf('native|') === 0 && p.sig.indexOf('native|') !== 0) leaveNative();
+    destroyHls();
+    lastSig = p.sig;
+    document.getElementById('liveBadge').classList.toggle('on', p.badge);
+    var label = document.getElementById('liveStatusLabel');
+    label.className = p.labelClass;
+    label.textContent = p.label;
+    document.getElementById('playerHost').innerHTML = p.html;
+
+    if (p.hls) attachHls(p.hls);
+    if (p.nativeSession) {
+      // Slight delay so video element exists in DOM
+      nativeRetry = 0;
+      setTimeout(function () { connectNativeViewer(p.nativeSession); }, 80);
+    }
+  }
+
+  function renderComments(items, err) {
+    var body = document.getElementById('chatBody');
+    if (err) {
+      body.innerHTML = '<p style="text-align:center;color:#c5221f;font-size:.9rem">Comments could not load (' + esc(err.code || 'error') + '). The church admin needs to publish the Firestore rules.</p>';
+      return;
+    }
+    if (!items.length) {
+      body.innerHTML = '<p style="text-align:center;color:var(--ink-soft);font-size:.9rem">No comments yet. Be the first to greet the church.</p>';
+      return;
+    }
+    var stick = body.scrollTop + body.clientHeight >= body.scrollHeight - 60;
+    body.innerHTML = items.map(function (c) {
+      var when = c.createdAt && c.createdAt.toDate ? c.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      var del = isAdminView ? ' <button type="button" class="chat-del" data-del-comment="' + esc(c.id) + '" title="Delete comment" style="border:0;background:none;color:#c5221f;cursor:pointer;font-weight:700;float:right">✕</button>' : '';
+      return '<div class="chat-line">' + del + '<span class="who">' + esc(c.displayName || 'Member') +
+        '</span><span class="when">' + when + '</span><div>' + esc(c.text) + '</div></div>';
+    }).join('');
+    if (stick) body.scrollTop = body.scrollHeight;
+  }
+
+  document.getElementById('chatBody').addEventListener('click', async function (e) {
+    var btn = e.target.closest('[data-del-comment]');
+    if (!btn) return;
+    try { await LMCC.deleteLiveComment(btn.getAttribute('data-del-comment')); }
+    catch (err) { alert(err.message || 'Could not delete'); }
+  });
+
+  function recMedia(r) {
+    var url = r.url || '';
+    if (/youtu/.test(url)) {
+      var m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/live\/)([A-Za-z0-9_-]{6,})/);
+      return m ? '<iframe src="https://www.youtube.com/embed/' + esc(m[1]) + '" allowfullscreen loading="lazy"></iframe>'
+               : '<a href="' + esc(url) + '" target="_blank" rel="noopener">Watch recording</a>';
+    }
+    return '<video src="' + esc(LMCC.playableVideoUrl(url)) + '" controls playsinline preload="metadata" poster="images/worship-celebration.jpg"></video>';
+  }
+
+  async function loadRecordings() {
+    var grid = document.getElementById('recordingsGrid');
+    try {
+      var list = await LMCC.getRecordings();
+      if (!list.length) { grid.innerHTML = '<p style="color:var(--ink-soft)">No recordings saved yet.</p>'; return; }
+      grid.innerHTML = list.map(function (r) {
+        var del = isAdminView ? '<button type="button" class="btn btn-outline-dark btn-sm" data-del-rec="' + esc(r.id) + '" style="margin-top:.6rem">Delete recording</button>' : '';
+        return '<div class="card rec-card"><h3 style="font-size:1rem">' + esc(r.title || 'Recording') + '</h3>' + recMedia(r) + del + '</div>';
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<p style="color:#c5221f">Could not load recordings.</p>';
+    }
+  }
+
+  document.getElementById('recordingsGrid').addEventListener('click', async function (e) {
+    var btn = e.target.closest('[data-del-rec]');
+    if (!btn) return;
+    if (!confirm('Delete this recording from the site?')) return;
+    try { await LMCC.deleteRecording(btn.getAttribute('data-del-rec')); loadRecordings(); }
+    catch (err) { alert(err.message || 'Could not delete'); }
+  });
+
+  function enterLive(admin) {
+    if (entered) return;                    // fixes double start (auth event + fallback timer)
+    entered = true;
+    isAdminView = !!admin;
+    gate.classList.add('hidden');
+    app.classList.remove('hidden');
+    unsubStream = LMCC.listenLiveStream(function (live, err) {
+      if (err) { renderPlayer({ active: false }); return; }
+      renderPlayer(live || { active: false });
+    });
+    unsubComments = LMCC.listenLiveComments(renderComments);
+    staleTimer = setInterval(function () { if (lastLive) renderPlayer(lastLive); }, 15000);
+    loadRecordings();
+  }
+
+  function showGate(msg) {
+    entered = false;
+    if (unsubStream) { unsubStream(); unsubStream = null; }
+    if (unsubComments) { unsubComments(); unsubComments = null; }
+    if (staleTimer) { clearInterval(staleTimer); staleTimer = null; }
+    leaveNative();
+    lastSig = null;
+    gate.classList.remove('hidden');
+    app.classList.add('hidden');
+    document.getElementById('gateMsg').innerHTML = msg ? '<div class="alert alert-warning">' + msg + '</div>' : '';
+  }
+
+  document.addEventListener('lmcc:auth', function (e) {
+    var user = e.detail.user, profile = e.detail.profile, admin = e.detail.isAdmin;
+    if (!user) return showGate('Please sign in with your fellowship account.');
+    if (admin || (profile && profile.status === 'approved')) return enterLive(admin);
+    if (profile && profile.status === 'rejected') return showGate('This account has not been approved for the live stream. Please contact the church office.');
+    if (profile && profile.status === 'pending') return showGate('Your account is pending admin approval. Once approved, you can watch and comment on the live stream.');
+    showGate('Only approved members can join the live stream. Contact the church office if you need help.');
+  });
+
+  document.getElementById('chatForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var input = document.getElementById('chatInput');
+    var btn = e.target.querySelector('button');
+    if (!input.value.trim()) return;
+    if (Date.now() - (window.__lastChat || 0) < 3000) return;   // 3s cooldown keeps big crowds readable
+    window.__lastChat = Date.now();
+    btn.disabled = true;
+    try {
+      await LMCC.postLiveComment(input.value);
+      input.value = '';
+    } catch (err) {
+      alert(err.message || 'Could not send');
+    }
+    btn.disabled = false;
+  });
+
+  // ── Interactive live giving ──────────────────────────────────────────
+  var LIVE_GOAL = 500000; // UGX — admin can change via settings later
+  var giftLayer = document.createElement('div');
+  giftLayer.className = 'gift-toast-layer';
+  giftLayer.id = 'giftToastLayer';
+  document.body.appendChild(giftLayer);
+
+  function fmtUGX(n) {
+    return 'UGX ' + Number(n || 0).toLocaleString('en-UG');
+  }
+  function showGiftToast(name, amount, purpose) {
+    var el = document.createElement('div');
+    el.className = 'gift-toast';
+    el.innerHTML = '<strong>' + esc(name || 'Someone') + '</strong> gave <strong>' + esc(fmtUGX(amount)) + '</strong>' +
+      (purpose ? ' · ' + esc(purpose) : '') + ' <span style="color:#c9a24b">♥</span>';
+    giftLayer.appendChild(el);
+    setTimeout(function () { try { el.remove(); } catch (e) {} }, 4800);
+  }
+  function updateGoalUI(raised) {
+    raised = Math.max(0, Number(raised) || 0);
+    var pct = Math.min(100, Math.round((raised / LIVE_GOAL) * 100));
+    var fill = document.getElementById('liveGoalFill');
+    var raisedEl = document.getElementById('liveGoalRaised');
+    var targetEl = document.getElementById('liveGoalTarget');
+    if (fill) fill.style.width = pct + '%';
+    if (raisedEl) raisedEl.textContent = fmtUGX(raised);
+    if (targetEl) targetEl.textContent = fmtUGX(LIVE_GOAL);
+  }
+  function renderTicker(donors) {
+    var wrap = document.getElementById('donorTicker');
+    var inner = document.getElementById('donorTickerInner');
+    if (!wrap || !inner) return;
+    if (!donors.length) { wrap.hidden = true; return; }
+    var html = donors.map(function (d) {
+      return '<span><b>' + esc(d.name || 'Member') + '</b> · ' + esc(fmtUGX(d.amount)) +
+        (d.purpose ? ' (' + esc(d.purpose) + ')' : '') + '</span>';
+    }).join('');
+    // Duplicate for seamless loop
+    inner.innerHTML = html + html;
+    wrap.hidden = false;
+  }
+
+  // Listen for recent confirmed donations (last 24h) for goal + ticker + toasts
+  var seenGiftIds = {};
+  var firstGiftSnap = true;
+  if (typeof firebase !== 'undefined') {
+    try {
+      firebase.firestore().collection('donations')
+        .orderBy('at', 'desc')
+        .limit(40)
+        .onSnapshot(function (snap) {
+          var raised = 0;
+          var recent = [];
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            var amt = Number(d.amount) || 0;
+            var ok = d.status === 'paid' || d.status === 'confirmed' || d.status === 'pending';
+            if (d.status === 'paid' || d.status === 'confirmed') raised += amt;
+            if (ok && recent.length < 12) {
+              recent.push({
+                name: d.anonymous ? 'Anonymous' : (d.name || 'Member'),
+                amount: amt, purpose: d.purpose, id: doc.id
+              });
+            }
+            if (!firstGiftSnap && !seenGiftIds[doc.id] && (d.status === 'paid' || d.status === 'confirmed')) {
+              showGiftToast(d.anonymous ? 'Anonymous' : d.name, amt, d.purpose);
+            }
+            seenGiftIds[doc.id] = true;
+          });
+          firstGiftSnap = false;
+          updateGoalUI(raised);
+          renderTicker(recent);
+        }, function (err) { console.warn('donations listener', err); });
+    } catch (e) { console.warn('gift listen', e); }
+  }
+  updateGoalUI(0);
+
+  // Quick-give buttons → donate page with prefilled amount
+  var qg = document.getElementById('quickGive');
+  if (qg) {
+    qg.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-v]');
+      if (!btn) return;
+      var v = btn.getAttribute('data-v');
+      window.location.href = 'donate.html?amount=' + encodeURIComponent(v) + '&from=live';
+    });
+  }
+})();
+</script>
+</body>
+</html>
